@@ -1,0 +1,41 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1750411814214,
+      "tag": "0000_living_shinobi_shaw",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1750412331898,
+      "tag": "0001_outgoing_nemesis",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1750421904743,
+      "tag": "0002_serious_madripoor",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1750517141614,
+      "tag": "0003_curly_nomad",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1750525646175,
+      "tag": "0004_nostalgic_chamber",
+      "breakpoints": true
+    }
+  ]
+}
