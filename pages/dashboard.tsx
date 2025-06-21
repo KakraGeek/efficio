@@ -192,13 +192,13 @@ const DashboardContent: React.FC<{ userName: string }> = ({ userName }) => {
   ];
 
   return (
-    <div className="p-4 sm:p-8 w-full mx-auto">
+    <div className="p-4 sm:p-8 max-w-6xl mx-auto">
       <h1 className="text-2xl font-bold mb-8 text-gray-800">Welcome to your Dashboard, {userName}!</h1>
-      <div className="flex flex-wrap gap-6 mb-10">
+      <div className="flex flex-wrap justify-center gap-6 mb-10">
         {metricCards.map(card => {
           const Icon = card.icon;
           return (
-            <div className="w-full sm:w-1/2 lg:w-1/4">
+            <div className="w-full sm:w-1/2 md:w-1/3 lg:w-1/4 xl:w-1/5">
               <MetricCard
                 key={card.label}
                 icon={<Icon className="h-8 w-8" />}
