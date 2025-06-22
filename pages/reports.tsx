@@ -223,9 +223,7 @@ export default function ReportsPage() {
 
   return (
     <div className="p-6 max-w-5xl mx-auto">
-      <h1 className="text-3xl font-bold mb-6 text-blue-700 flex items-center gap-2">
-        <DocumentTextIcon className="h-8 w-8 text-blue-500" /> Reports
-      </h1>
+      <h1 className="text-2xl font-bold mb-6 text-black">Reports</h1>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {/* Clients */}
         <div className="bg-white rounded-lg shadow p-6 border border-gray-100">

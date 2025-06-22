@@ -74,6 +74,43 @@ function formatDateBritish(dateValue: string | Date) {
  */
 const InventoryTable: React.FC = () => {
   const { data, isLoading, error } = trpc.getInventory.useQuery();
+  const utils = trpc.useContext();
+  const createInventoryItem = trpc.createInventoryItem.useMutation({
+    onSuccess: () => {
+      utils.getInventory.invalidate();
+      toast.success('Item created successfully!');
+    },
+    onError: (error: any) => {
+      toast.error(`Error creating item: ${error.message}`);
+    }
+  });
+  const updateInventoryItem = trpc.updateInventoryItem.useMutation({
+    onSuccess: () => {
+      utils.getInventory.invalidate();
+      toast.success('Item updated successfully!');
+    },
+    onError: (error: any) => {
+      toast.error(`Error updating item: ${error.message}`);
+    }
+  });
+  const deleteInventoryItem = trpc.deleteInventoryItem.useMutation({
+    onSuccess: () => {
+      utils.getInventory.invalidate();
+      toast.success('Item deleted successfully!');
+    },
+    onError: (error: any) => {
+      toast.error(`Error deleting item: ${error.message}`);
+    }
+  });
+  const bulkDeleteInventory = trpc.bulkDeleteInventory.useMutation({
+    onSuccess: () => {
+      utils.getInventory.invalidate();
+      toast.success('Items deleted successfully!');
+    },
+    onError: (error: any) => {
+      toast.error(`Error deleting items: ${error.message}`);
+    }
+  });
   console.log('InventoryTable data:', data);
   const [sortState, setSortState] = useState<SortState<InventoryRow>>(defaultSort);
   const [search, setSearch] = useState('');
@@ -347,7 +384,8 @@ const InventoryTable: React.FC = () => {
 
   // Placeholder delete function
   const handleDelete = () => {
-    toast.success(`Item '${itemToDelete?.name}' deleted successfully!`);
+    if (!itemToDelete) return;
+    deleteInventoryItem.mutate({ id: itemToDelete.id });
     setModalOpen(false);
     setItemToDelete(null);
   };
@@ -365,7 +403,6 @@ const InventoryTable: React.FC = () => {
 
   return (
     <div className="p-4">
-      <h2 className="mb-4 text-lg font-bold">Inventory</h2>
       {pendingCount > 0 && (
         <div className="mb-2 text-yellow-700 bg-yellow-100 border border-yellow-300 rounded px-3 py-2 flex items-center gap-2">
           <span className="font-semibold">{pendingCount} item{pendingCount > 1 ? 's' : ''} pending sync</span>

@@ -70,8 +70,45 @@ const PaymentsTable: React.FC = () => {
   const { data, isLoading, error } = trpc.getPayments.useQuery();
   const { data: ordersData } = trpc.getOrders.useQuery();
   const { data: clientsData } = trpc.getClients.useQuery();
+  const utils = trpc.useContext();
+  const createPayment = trpc.createPayment.useMutation({
+    onSuccess: () => {
+      utils.getPayments.invalidate();
+      toast.success('Payment created successfully!');
+    },
+    onError: (error: any) => {
+      toast.error(`Error creating payment: ${error.message}`);
+    }
+  });
+  const updatePayment = trpc.updatePayment.useMutation({
+    onSuccess: () => {
+      utils.getPayments.invalidate();
+      toast.success('Payment updated successfully!');
+    },
+    onError: (error: any) => {
+      toast.error(`Error updating payment: ${error.message}`);
+    }
+  });
+  const deletePayment = trpc.deletePayment.useMutation({
+    onSuccess: () => {
+      utils.getPayments.invalidate();
+      toast.success('Payment deleted successfully!');
+    },
+    onError: (error: any) => {
+      toast.error(`Error deleting payment: ${error.message}`);
+    }
+  });
+  const bulkDeletePayments = trpc.bulkDeletePayments.useMutation({
+    onSuccess: () => {
+      utils.getPayments.invalidate();
+      toast.success('Payments deleted successfully!');
+    },
+    onError: (error: any) => {
+      toast.error(`Error deleting payments: ${error.message}`);
+    }
+  });
   console.log('PaymentsTable data:', data);
-  const [sortState, setSortState] = useState<SortState<Payment>>(defaultSort);
+  const [sortState, setSortState] = useState<SortState<PaymentRow>>(defaultSort);
   const [search, setSearch] = useState('');
   const [methodFilter, setMethodFilter] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -134,8 +171,8 @@ const PaymentsTable: React.FC = () => {
     if (!filteredData) return [];
     if (!sortState.column) return filteredData;
     const sorted = [...filteredData].sort((a, b) => {
-      const aValue = a[sortState.column!];
-      const bValue = b[sortState.column!];
+      const aValue = a[sortState.column as keyof PaymentRow];
+      const bValue = b[sortState.column as keyof PaymentRow];
       if (aValue === bValue) return 0;
       if (aValue === null || aValue === undefined) return 1;
       if (bValue === null || bValue === undefined) return -1;
@@ -246,7 +283,7 @@ const PaymentsTable: React.FC = () => {
   ];
 
   // Handlers
-  const handleSort = (column: keyof Payment | 'renderActions') => {
+  const handleSort = (column: keyof PaymentRow) => {
     if (column === 'renderActions') return;
     setSortState((prev) => {
       if (prev.column === column) {
@@ -280,7 +317,6 @@ const PaymentsTable: React.FC = () => {
 
   return (
     <div className="p-4">
-      <h2 className="mb-4 text-lg font-bold">Payments</h2>
       {pendingCount > 0 && (
         <div className="mb-2 text-yellow-700 bg-yellow-100 border border-yellow-300 rounded px-3 py-2 flex items-center gap-2">
           <span className="font-semibold">{pendingCount} payment{pendingCount > 1 ? 's' : ''} pending sync</span>

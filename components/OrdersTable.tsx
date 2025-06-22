@@ -93,8 +93,45 @@ function formatDateBritish(dateValue: string | Date) {
  */
 const OrdersTable: React.FC = () => {
   const { data, isLoading, error } = trpc.getOrders.useQuery();
+  const utils = trpc.useContext();
+  const createOrder = trpc.createOrder.useMutation({
+    onSuccess: () => {
+      utils.getOrders.invalidate();
+      toast.success('Order created successfully!');
+    },
+    onError: (error: any) => {
+      toast.error(`Error creating order: ${error.message}`);
+    },
+  });
+  const updateOrder = trpc.updateOrder.useMutation({
+    onSuccess: () => {
+      utils.getOrders.invalidate();
+      toast.success('Order updated successfully!');
+    },
+    onError: (error: any) => {
+      toast.error(`Error updating order: ${error.message}`);
+    },
+  });
+  const deleteOrder = trpc.deleteOrder.useMutation({
+    onSuccess: () => {
+      utils.getOrders.invalidate();
+      toast.success('Order deleted successfully!');
+    },
+    onError: (error: any) => {
+      toast.error(`Error deleting order: ${error.message}`);
+    },
+  });
+  const bulkDeleteOrders = trpc.bulkDeleteOrders.useMutation({
+    onSuccess: () => {
+      utils.getOrders.invalidate();
+      toast.success('Orders deleted successfully!');
+    },
+    onError: (error: any) => {
+      toast.error(`Error deleting orders: ${error.message}`);
+    },
+  });
   console.log('OrdersTable data:', data);
-  const [sortState, setSortState] = useState<SortState<Order>>(defaultSort);
+  const [sortState, setSortState] = useState<SortState<OrderRow>>(defaultSort);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -138,9 +175,6 @@ const OrdersTable: React.FC = () => {
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   // Bulk delete modal state
   const [bulkDeleteModalOpen, setBulkDeleteModalOpen] = useState(false);
-  // Place the mutation hook here, inside the component
-  const createOrder = trpc.createOrder.useMutation();
-  const updateOrder = trpc.updateOrder.useMutation();
 
   // Get unique statuses for the dropdown
   const statusOptions = useMemo(() => {
@@ -161,10 +195,10 @@ const OrdersTable: React.FC = () => {
       const term = search.trim().toLowerCase();
       filtered = filtered.filter(row =>
         columns.some(col => {
-          // Only filter on real Order fields
           if (col.accessor === 'renderActions') return false;
-          if (typeof col.accessor === 'string' && (col.accessor as keyof Order) in row) {
-            const value = row[col.accessor as keyof Order];
+          const key = col.accessor as keyof Order;
+          if (key in row) {
+            const value = row[key as keyof OrderRow];
             if (value === null || value === undefined) return false;
             return String(value).toLowerCase().includes(term);
           }
@@ -178,9 +212,23 @@ const OrdersTable: React.FC = () => {
   // Sorting logic (applied after filtering)
   const sortedData = useMemo(() => {
     if (!filteredData) return [];
-    // Sort by id descending (newest first)
-    return [...filteredData].sort((a, b) => b.id - a.id);
-  }, [filteredData]);
+    if (!sortState.column || sortState.column === 'renderActions') return filteredData;
+
+    const sorted = [...filteredData].sort((a, b) => {
+      const aValue = a[sortState.column as keyof OrderRow];
+      const bValue = b[sortState.column as keyof OrderRow];
+      if (aValue === bValue) return 0;
+      if (aValue === null || aValue === undefined) return -1;
+      if (bValue === null || bValue === undefined) return 1;
+      if (typeof aValue === 'number' && typeof bValue === 'number') {
+        return sortState.direction === 'asc' ? aValue - bValue : bValue - aValue;
+      }
+      return sortState.direction === 'asc'
+        ? String(aValue).localeCompare(String(bValue))
+        : String(bValue).localeCompare(String(aValue));
+    });
+    return sorted;
+  }, [filteredData, sortState]);
 
   // Pagination logic
   const totalRows = sortedData.length;
@@ -344,7 +392,7 @@ const OrdersTable: React.FC = () => {
   };
 
   // Handlers
-  const handleSort = (column: keyof Order | 'renderActions') => {
+  const handleSort = (column: keyof OrderRow) => {
     if (column === 'renderActions') return;
     setSortState((prev) => {
       if (prev.column === column) {
@@ -378,7 +426,6 @@ const OrdersTable: React.FC = () => {
 
   return (
     <div className="p-4">
-      <h2 className="mb-4 text-lg font-bold">Orders</h2>
       {pendingCount > 0 && (
         <div className="mb-2 text-yellow-700 bg-yellow-100 border border-yellow-300 rounded px-3 py-2 flex items-center gap-2">
           <span className="font-semibold">{pendingCount} order{pendingCount > 1 ? 's' : ''} pending sync</span>
@@ -524,7 +571,7 @@ const OrdersTable: React.FC = () => {
               onClick={async () => {
                 if (!orderToEdit) return;
                 try {
-                  await updateOrder.mutateAsync({
+                  await updateOrderMutation.mutateAsync({
                     id: orderToEdit.id,
                     status: editForm.status,
                     description: editForm.description,
@@ -626,7 +673,7 @@ const OrdersTable: React.FC = () => {
                 }
                 // Create the order with all fields, including image_url
                 try {
-                  await createOrder.mutateAsync({
+                  await createOrderMutation.mutateAsync({
                     ...addForm,
                     client_id: Number(addForm.client_id),
                     total_price: Number(addForm.total_price),

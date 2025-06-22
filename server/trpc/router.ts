@@ -4,7 +4,7 @@ import { createTRPCReact } from '@trpc/react-query';
 import type { Context } from './context';
 import { db } from '../../db/client';
 import { clients, orders, inventory, payments } from '../../db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, inArray } from 'drizzle-orm';
 
 const t = initTRPC.context<Context>().create();
 
@@ -39,6 +39,39 @@ export const appRouter = t.router({
     if (!ctx.userId) throw new Error('Not authenticated');
     return db.select().from(payments).where(eq(payments.user_id, ctx.userId));
   }),
+
+  addClient: t.procedure
+    .input(
+      z.object({
+        name: z.string(),
+        phone: z.string().optional(),
+        email: z.string().optional(),
+        neck: z.number().optional(),
+        chest: z.number().optional(),
+        waist: z.number().optional(),
+        hips: z.number().optional(),
+        thigh: z.number().optional(),
+        inseam: z.number().optional(),
+        arm_length: z.number().optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      if (!ctx.userId) throw new Error("Not authenticated");
+      return db.insert(clients).values({ ...input, user_id: ctx.userId });
+    }),
+  
+  removeClient: t.procedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ input }) => {
+      return db.delete(clients).where(eq(clients.id, input.id));
+    }),
+
+  bulkRemoveClients: t.procedure
+    .input(z.object({ ids: z.array(z.number()) }))
+    .mutation(async ({ input }) => {
+      if (input.ids.length === 0) return;
+      return db.delete(clients).where(inArray(clients.id, input.ids));
+    }),
 
   // Create a new order for the current user
   createOrder: t.procedure

@@ -7,5 +7,5 @@ const withPWA = require('next-pwa')({
 
 module.exports = withPWA({
   reactStrictMode: true,
-  experimental: { serverActions: true },
+  experimental: { serverActions: {} },
 });

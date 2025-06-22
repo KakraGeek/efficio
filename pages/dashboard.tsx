@@ -333,7 +333,7 @@ const DashboardContent: React.FC<{ userName: string }> = ({ userName }) => {
           </div>
         </div>
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <Link href="/clients" className="block rounded-lg shadow bg-white hover:bg-blue-50 transition p-6 border border-gray-200">
           <div className="text-gray-500 text-sm mb-1">Clients</div>
           <div className="text-3xl font-bold">{clients.data?.length ?? 0}</div>
@@ -356,7 +356,7 @@ const DashboardContent: React.FC<{ userName: string }> = ({ userName }) => {
         </Link>
       </div>
       <div className="text-gray-600 text-center mt-8">
-        Need help? Check the <Link href="/Guides/efficio-vibe-scaffolding.md" className="text-blue-500 underline">Efficio Guide</Link>.
+        Need help? Check the <Link href="/support" className="text-blue-500 underline">Efficio Guide</Link>.
       </div>
     </div>
   );
