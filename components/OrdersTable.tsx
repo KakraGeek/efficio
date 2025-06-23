@@ -15,7 +15,6 @@ interface Order {
   total_price: number | null;
   created_at: string;
   updated_at: string;
-  notes: string | null;
   image_url: string | null;
   pendingSync: boolean;
 }
@@ -40,8 +39,11 @@ interface ClientForOrder {
 // Define allowed statuses for orders
 const ORDER_STATUSES = ['pending', 'in-progress', 'extended', 'completed'];
 
+// Define valid sort columns
+type OrderSortKey = keyof Order | 'renderActions';
+
 // Define columns for the orders table
-const columns: Column<Order>[] = [
+const columns: Column<OrderRow>[] = [
   { accessor: 'id', header: 'Order ID' },
   { accessor: 'client_id', header: 'Client ID' },
   {
@@ -68,11 +70,6 @@ const columns: Column<Order>[] = [
     header: 'Created At',
     render: (value) => (value ? formatDateBritish(value) : '-'),
   },
-];
-
-// Add Actions column for view button
-const columnsWithActions: Column<OrderRow>[] = [
-  ...columns,
   {
     accessor: 'renderActions',
     header: 'Actions',
@@ -80,7 +77,7 @@ const columnsWithActions: Column<OrderRow>[] = [
   },
 ];
 
-const defaultSort: SortState<Order> = { column: null, direction: 'asc' };
+const defaultSort: SortState<OrderRow> = { column: null, direction: 'asc' };
 const defaultRowsPerPage = 10;
 
 function formatDateBritish(dateValue: string | Date) {
@@ -103,7 +100,6 @@ const OrdersTable: React.FC = () => {
     return rawData.map(order => ({
       ...order,
       pendingSync: false,
-      notes: order.notes || null,
       image_url: order.image_url || null
     }));
   }, [rawData]);
@@ -146,7 +142,7 @@ const OrdersTable: React.FC = () => {
     },
   });
   console.log('OrdersTable data:', data);
-  const [sortState, setSortState] = useState<SortState<OrderRow>>(defaultSort);
+  const [sortState, setSortState] = useState<SortState<OrderRow>>({ column: null, direction: 'asc' });
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -231,12 +227,19 @@ const OrdersTable: React.FC = () => {
   const sortedData = useMemo(() => {
     if (!filteredData) return [];
     if (!sortState.column) return filteredData;
-    const sorted = [...filteredData].sort((a, b) => {
-      // Handle renderActions column separately
-      if (sortState.column === 'renderActions') return 0;
+    
+    return [...filteredData].sort((a, b) => {
+      const column = sortState.column;
+      // Skip sorting for renderActions column
+      if (column === 'renderActions') return 0;
       
-      const aValue = a[sortState.column as keyof Order];
-      const bValue = b[sortState.column as keyof Order];
+      // Cast objects to Order type to access properties safely
+      const orderA = a as Order;
+      const orderB = b as Order;
+      // Now column is guaranteed to be a keyof Order
+      const key = column as keyof Order;
+      const aValue = orderA[key];
+      const bValue = orderB[key];
       
       if (aValue === bValue) return 0;
       if (aValue === null || aValue === undefined) return 1;
@@ -251,8 +254,21 @@ const OrdersTable: React.FC = () => {
         ? String(aValue).localeCompare(String(bValue))
         : String(bValue).localeCompare(String(aValue));
     });
-    return sorted;
   }, [filteredData, sortState]);
+
+  // Handle sorting
+  const handleSort = (column: OrderSortKey) => {
+    if (column === 'renderActions') return;
+    setSortState((prev) => ({
+      column,
+      direction:
+        prev.column === column
+          ? prev.direction === 'asc'
+            ? 'desc'
+            : 'asc'
+          : 'asc',
+    }));
+  };
 
   // Add renderActions to each row
   const dataWithActions: OrderRow[] = useMemo(() => {
@@ -342,15 +358,6 @@ const OrdersTable: React.FC = () => {
   };
 
   // Handlers
-  const handleSort = (column: keyof OrderRow) => {
-    if (column === 'renderActions') return;
-    setSortState((prev) => {
-      if (prev.column === column) {
-        return { column, direction: prev.direction === 'asc' ? 'desc' : 'asc' };
-      }
-      return { column, direction: 'asc' };
-    });
-  };
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
   };
@@ -374,6 +381,51 @@ const OrdersTable: React.FC = () => {
   const pendingCount = (data || []).filter(
     (o) => (o as any).pendingSync
   ).length;
+
+  // Handle edit form submission
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!orderToEdit) return;
+    try {
+      await updateOrder.mutateAsync({
+        id: orderToEdit.id,
+        status: editForm.status,
+        description: editForm.description,
+        due_date: editForm.due_date,
+        total_price: editForm.total_price,
+        image_url: editForm.image_url,
+      });
+      setEditModalOpen(false);
+      toast.success('Order updated successfully!');
+    } catch (error: any) {
+      toast.error(`Error updating order: ${error.message}`);
+    }
+  };
+
+  // Handle add form submission
+  const handleAddSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!addForm.client_id) {
+      toast.error('Please select a client');
+      return;
+    }
+    try {
+      // Create the order with all fields, including image_url
+      await createOrder.mutateAsync({
+        ...addForm,
+        client_id: Number(addForm.client_id),
+        status: addForm.status || 'pending',
+        description: addForm.description || null,
+        due_date: addForm.due_date || null,
+        total_price: addForm.total_price || null,
+        image_url: addForm.image_url || null,
+      });
+      setAddModalOpen(false);
+      toast.success('Order created successfully!');
+    } catch (error: any) {
+      toast.error(`Error creating order: ${error.message}`);
+    }
+  };
 
   if (isLoading) return <div>Loading orders...</div>;
   if (error) return <div className="text-red-500">Error: {error.message}</div>;
@@ -451,7 +503,7 @@ const OrdersTable: React.FC = () => {
         </select>
       </div>
       <DataTable
-        columns={columnsWithActions}
+        columns={columns}
         data={paginatedData}
         onSort={handleSort}
         sortState={sortState}
@@ -592,28 +644,7 @@ const OrdersTable: React.FC = () => {
             </button>
             <button
               className="px-4 py-2 rounded bg-green-500 text-white hover:bg-green-600"
-              onClick={async () => {
-                if (!orderToEdit) return;
-                try {
-                  await updateOrder.mutateAsync({
-                    id: orderToEdit.id,
-                    status: editForm.status,
-                    description: editForm.description,
-                    // Add other fields as needed
-                  });
-                  toast.success('Order updated successfully!');
-                  setEditModalOpen(false);
-                  setOrderToEdit(null);
-                  setEditForm({ pendingSync: false });
-                  // Refetch orders to update the UI
-                  if (typeof window !== 'undefined') {
-                    window.location.reload(); // Quick fix: reload page to see changes
-                  }
-                  // For a better UX, you could use trpc context to refetch orders without reload
-                } catch (err) {
-                  toast.error('Failed to update order.');
-                }
-              }}
+              onClick={handleEditSubmit}
             >
               Save
             </button>
@@ -623,9 +654,7 @@ const OrdersTable: React.FC = () => {
         {orderToEdit ? (
           <form
             className="space-y-3"
-            onSubmit={(e) => {
-              e.preventDefault();
-            }}
+            onSubmit={handleEditSubmit}
           >
             <div>
               <label className="block font-semibold mb-1">Status</label>
@@ -716,73 +745,7 @@ const OrdersTable: React.FC = () => {
             </button>
             <button
               className="px-4 py-2 rounded bg-green-600 text-white hover:bg-green-700"
-              onClick={async () => {
-                // Validate required fields
-                if (
-                  !addForm.client_id ||
-                  !addForm.status ||
-                  !addForm.due_date ||
-                  !addForm.total_price
-                ) {
-                  toast.error('Please fill in all required fields.');
-                  return;
-                }
-                let imageUrl = '';
-                if (addImage) {
-                  // Upload the image to the API route
-                  const formData = new FormData();
-                  formData.append('file', addImage);
-                  try {
-                    const res = await fetch('/api/upload-order-image', {
-                      method: 'POST',
-                      body: formData,
-                    });
-                    const data = await res.json();
-                    if (res.ok && data.url) {
-                      imageUrl = data.url;
-                      toast.success('Image uploaded!');
-                    } else {
-                      toast.error('Image upload failed.');
-                      return;
-                    }
-                  } catch (err) {
-                    toast.error('Image upload error.');
-                    return;
-                  }
-                }
-                // Create the order with all fields, including image_url
-                try {
-                  await createOrder.mutateAsync({
-                    ...addForm,
-                    client_id: Number(addForm.client_id),
-                    total_price: Number(addForm.total_price),
-                    image_url: imageUrl,
-                  });
-                  toast.success(`Order added successfully!`);
-                  setAddModalOpen(false);
-                  setAddForm({
-                    client_id: '',
-                    status: '',
-                    description: '',
-                    due_date: '',
-                    total_price: '',
-                    neck: '',
-                    chest: '',
-                    bust: '',
-                    waist: '',
-                    hips: '',
-                    thigh: '',
-                    inseam: '',
-                    arm_length: '',
-                    notes: '',
-                    pendingSync: false,
-                  });
-                  setAddImage(null);
-                  setAddImagePreview(null);
-                } catch (err) {
-                  toast.error('Failed to add order.');
-                }
-              }}
+              onClick={handleAddSubmit}
             >
               Add
             </button>
@@ -791,9 +754,7 @@ const OrdersTable: React.FC = () => {
       >
         <form
           className="space-y-3"
-          onSubmit={(e) => {
-            e.preventDefault();
-          }}
+          onSubmit={handleAddSubmit}
         >
           {/* Client Dropdown */}
           <div>
