@@ -238,8 +238,11 @@ const OrdersTable: React.FC = () => {
       const orderB = b as Order;
       // Now column is guaranteed to be a keyof Order
       const key = column as keyof Order;
-      const aValue = orderA[key];
-      const bValue = orderB[key];
+      // Check if the key exists in the objects
+      if (!(key in orderA) || !(key in orderB)) return 0;
+      // Get the values using type assertion
+      const aValue = orderA[key as keyof typeof orderA];
+      const bValue = orderB[key as keyof typeof orderB];
       
       if (aValue === bValue) return 0;
       if (aValue === null || aValue === undefined) return 1;
