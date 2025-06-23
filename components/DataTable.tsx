@@ -8,6 +8,8 @@ export interface Column<T> {
   header: React.ReactNode;
   // Optional: a function to render custom cell content
   render?: (value: any, row: T) => React.ReactNode;
+  // Optional: whether this column is sortable
+  sortable?: boolean;
 }
 
 // Sorting state type
@@ -21,7 +23,7 @@ interface DataTableProps<T> {
   columns: Column<T>[];
   data: T[];
   // Optional: sorting support
-  onSort?: (column: keyof T | string) => void;
+  onSort?: (column: string) => void;
   sortState?: SortState<T>;
 }
 
@@ -52,8 +54,16 @@ function DataTable<T extends object>({
             {columns.map((col) => (
               <th
                 key={String(col.accessor)}
-                className={`px-4 py-2 text-left font-semibold text-gray-700 select-none ${onSort ? 'cursor-pointer hover:bg-gray-200' : ''}`}
-                onClick={onSort ? () => onSort(col.accessor) : undefined}
+                className={`px-4 py-2 text-left font-semibold text-gray-700 select-none ${
+                  onSort && col.sortable !== false
+                    ? 'cursor-pointer hover:bg-gray-200'
+                    : ''
+                }`}
+                onClick={
+                  onSort && col.sortable !== false
+                    ? () => onSort(String(col.accessor))
+                    : undefined
+                }
               >
                 {col.header}
                 {getSortIndicator(col)}
