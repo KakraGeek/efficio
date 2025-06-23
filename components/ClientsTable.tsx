@@ -4,35 +4,7 @@ import { trpc } from '../utils/trpc';
 import Modal from './Modal';
 import toast from 'react-hot-toast';
 import { useOnlineStatus } from '../lib/useOnlineStatus';
-
-// Define the shape of a client object (should match your DB schema)
-interface Client {
-  id: number;
-  name: string;
-  phone: string | null;
-  email: string | null;
-  neck: number | null;
-  chest: number | null;
-  bust: number | null;
-  waist: number | null;
-  hips: number | null;
-  thigh: number | null;
-  inseam: number | null;
-  arm_length: number | null;
-  outseam: number | null; // Standard: outseam (full leg length)
-  ankle: number | null; // Standard: ankle (bottom opening)
-  shoulder: number | null;
-  sleeve_length: number | null;
-  knee: number | null;
-  wrist: number | null;
-  rise: number | null;
-  bicep: number | null;
-  notes: string | null;
-  created_at: string;
-  updated_at: string;
-  user_id: string;
-  pendingSync?: boolean;
-}
+import { Client } from '../types/client';
 
 // Extend Client for table data to include renderActions
 type ClientRow = Client & { renderActions?: () => React.ReactNode };
@@ -69,8 +41,8 @@ const columns: Column<Client>[] = [
       ];
       const filled = fields.filter(
         (f) =>
-          row[f as keyof Client] !== undefined &&
-          row[f as keyof Client] !== null
+          (row as Client)[f as keyof Client] !== undefined &&
+          (row as Client)[f as keyof Client] !== null
       ).length;
       return `${filled} fields`;
     },
@@ -104,6 +76,10 @@ function formatDateBritish(dateValue: string | Date) {
  */
 const ClientsTable: React.FC = () => {
   const { data, isLoading, error } = trpc.getClients.useQuery();
+  const clients: Client[] = (data ?? []).map((c) => ({
+    ...(c as any),
+    pendingSync: (c as any).pendingSync ?? false,
+  }));
   console.log('ClientsTable data:', data);
   const [sortState, setSortState] = useState<SortState<Client>>(defaultSort);
   const [search, setSearch] = useState('');
@@ -174,10 +150,10 @@ const ClientsTable: React.FC = () => {
 
   // Filtering logic
   const filteredData = useMemo(() => {
-    if (!data) return [];
-    if (!search.trim()) return data;
+    if (!clients) return [];
+    if (!search.trim()) return clients;
     const term = search.trim().toLowerCase();
-    return data.filter((row) =>
+    return clients.filter((row) =>
       columns.some((col) => {
         // Only filter on real Client fields
         if (col.accessor === 'renderActions') return false;
@@ -185,14 +161,14 @@ const ClientsTable: React.FC = () => {
           typeof col.accessor === 'string' &&
           (col.accessor as keyof Client) in row
         ) {
-          const value = row[col.accessor as keyof Client];
+          const value = (row as any)[col.accessor as keyof Client];
           if (value === null || value === undefined) return false;
           return String(value).toLowerCase().includes(term);
         }
         return false;
       })
     );
-  }, [data, search]);
+  }, [clients, search]);
 
   // Sorting logic (applied after filtering)
   const sortedData = useMemo(() => {
