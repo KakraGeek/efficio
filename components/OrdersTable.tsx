@@ -15,7 +15,8 @@ interface Order {
   total_price: number | null;
   created_at: string;
   updated_at: string;
-  notes?: string;
+  notes: string | null;
+  image_url: string | null;
   pendingSync: boolean;
 }
 
@@ -101,7 +102,9 @@ const OrdersTable: React.FC = () => {
     if (!rawData) return [];
     return rawData.map(order => ({
       ...order,
-      pendingSync: false
+      pendingSync: false,
+      notes: order.notes || null,
+      image_url: order.image_url || null
     }));
   }, [rawData]);
 
@@ -227,15 +230,18 @@ const OrdersTable: React.FC = () => {
   // Sorting logic (applied after filtering)
   const sortedData = useMemo(() => {
     if (!filteredData) return [];
-    if (!sortState.column || sortState.column === 'renderActions')
-      return filteredData;
-
+    if (!sortState.column) return filteredData;
     const sorted = [...filteredData].sort((a, b) => {
-      const aValue = a[sortState.column as keyof OrderRow];
-      const bValue = b[sortState.column as keyof OrderRow];
+      // Handle renderActions column separately
+      if (sortState.column === 'renderActions') return 0;
+      
+      const aValue = a[sortState.column as keyof Order];
+      const bValue = b[sortState.column as keyof Order];
+      
       if (aValue === bValue) return 0;
-      if (aValue === null || aValue === undefined) return -1;
-      if (bValue === null || bValue === undefined) return 1;
+      if (aValue === null || aValue === undefined) return 1;
+      if (bValue === null || bValue === undefined) return -1;
+      
       if (typeof aValue === 'number' && typeof bValue === 'number') {
         return sortState.direction === 'asc'
           ? aValue - bValue
@@ -248,125 +254,12 @@ const OrdersTable: React.FC = () => {
     return sorted;
   }, [filteredData, sortState]);
 
-  // Pagination logic
-  const totalRows = sortedData.length;
-  const totalPages = Math.ceil(totalRows / rowsPerPage) || 1;
-  const paginatedData = useMemo(() => {
-    const start = (currentPage - 1) * rowsPerPage;
-    return sortedData.slice(start, start + rowsPerPage);
-  }, [sortedData, currentPage, rowsPerPage]);
-
-  // Only add renderActions after all filtering, sorting, and pagination
-  const paginatedDataWithActions: OrderRow[] = paginatedData.map((row) => ({
-    ...row,
-    renderActions: () => (
-      <>
-        <button
-          className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 text-sm"
-          onClick={() => {
-            setOrderToView(row);
-            setViewModalOpen(true);
-          }}
-        >
-          View
-        </button>
-        <button
-          className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600 text-sm ml-2"
-          onClick={() => {
-            setOrderToEdit(row);
-            setEditForm(row);
-            setEditModalOpen(true);
-          }}
-        >
-          Edit
-        </button>
-        <button
-          className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-sm ml-2"
-          onClick={() => {
-            setOrderToDelete(row);
-            setDeleteModalOpen(true);
-          }}
-        >
-          Delete
-        </button>
-        {(row as any).pendingSync && (
-          <span className="ml-2 px-2 py-0.5 bg-yellow-400 text-xs rounded">
-            Pending Sync
-          </span>
-        )}
-      </>
-    ),
-  }));
-
-  // Fix columnsWithBulk: bulkSelect column renders a checkbox for each row, and header has a working 'Select All' checkbox
-  const columnsWithBulk: Column<OrderRow>[] = [
-    {
-      accessor: 'bulkSelect',
-      header: (
-        <input
-          type="checkbox"
-          className="align-middle"
-          aria-label="Select all"
-          checked={
-            paginatedDataWithActions.length > 0 &&
-            paginatedDataWithActions.every((row) =>
-              selectedIds.includes(row.id)
-            )
-          }
-          // @ts-ignore: indeterminate is not a standard prop, but can be set via ref if needed
-          indeterminate={
-            paginatedDataWithActions.some((row) =>
-              selectedIds.includes(row.id)
-            ) &&
-            !paginatedDataWithActions.every((row) =>
-              selectedIds.includes(row.id)
-            )
-          }
-          onChange={(e) => {
-            if (e.target.checked) {
-              setSelectedIds((ids) =>
-                Array.from(
-                  new Set([
-                    ...ids,
-                    ...paginatedDataWithActions.map((row) => row.id),
-                  ])
-                )
-              );
-            } else {
-              setSelectedIds((ids) =>
-                ids.filter(
-                  (id) => !paginatedDataWithActions.some((row) => row.id === id)
-                )
-              );
-            }
-          }}
-        />
-      ),
-      render: (_value, row) => (
-        <input
-          type="checkbox"
-          checked={selectedIds.includes(row.id)}
-          onChange={(e) => {
-            if (e.target.checked) {
-              setSelectedIds((ids) => [...ids, row.id]);
-            } else {
-              setSelectedIds((ids) => ids.filter((id) => id !== row.id));
-            }
-          }}
-          className="align-middle"
-          aria-label="Select row"
-        />
-      ),
-    },
-    ...columnsWithActions.filter((col) => col.accessor !== 'renderActions'),
-    // Add the renderActions column back with a valid accessor
-    {
-      accessor: 'renderActions',
-      header:
-        columnsWithActions.find((col) => col.accessor === 'renderActions')
-          ?.header ?? 'Actions',
-      render: (_value, row) => (
-        <>
+  // Add renderActions to each row
+  const dataWithActions: OrderRow[] = useMemo(() => {
+    return sortedData.map((row) => ({
+      ...row,
+      renderActions: () => (
+        <div className="flex gap-2">
           <button
             className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 text-sm"
             onClick={() => {
@@ -377,7 +270,7 @@ const OrdersTable: React.FC = () => {
             View
           </button>
           <button
-            className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600 text-sm ml-2"
+            className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600 text-sm"
             onClick={() => {
               setOrderToEdit(row);
               setEditForm(row);
@@ -387,7 +280,7 @@ const OrdersTable: React.FC = () => {
             Edit
           </button>
           <button
-            className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-sm ml-2"
+            className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-sm"
             onClick={() => {
               setOrderToDelete(row);
               setDeleteModalOpen(true);
@@ -395,15 +288,23 @@ const OrdersTable: React.FC = () => {
           >
             Delete
           </button>
-          {(row as any).pendingSync && (
+          {row.pendingSync && (
             <span className="ml-2 px-2 py-0.5 bg-yellow-400 text-xs rounded">
               Pending Sync
             </span>
           )}
-        </>
+        </div>
       ),
-    },
-  ];
+    }));
+  }, [sortedData]);
+
+  // Pagination logic
+  const totalRows = dataWithActions.length;
+  const totalPages = Math.ceil(totalRows / rowsPerPage) || 1;
+  const paginatedData = useMemo(() => {
+    const start = (currentPage - 1) * rowsPerPage;
+    return dataWithActions.slice(start, start + rowsPerPage);
+  }, [dataWithActions, currentPage, rowsPerPage]);
 
   // Prefill measurements when client changes
   React.useEffect(() => {
@@ -550,8 +451,8 @@ const OrdersTable: React.FC = () => {
         </select>
       </div>
       <DataTable
-        columns={columnsWithBulk}
-        data={paginatedDataWithActions}
+        columns={columnsWithActions}
+        data={paginatedData}
         onSort={handleSort}
         sortState={sortState}
       />
@@ -694,7 +595,7 @@ const OrdersTable: React.FC = () => {
               onClick={async () => {
                 if (!orderToEdit) return;
                 try {
-                  await updateOrderMutation.mutateAsync({
+                  await updateOrder.mutateAsync({
                     id: orderToEdit.id,
                     status: editForm.status,
                     description: editForm.description,
@@ -851,7 +752,7 @@ const OrdersTable: React.FC = () => {
                 }
                 // Create the order with all fields, including image_url
                 try {
-                  await createOrderMutation.mutateAsync({
+                  await createOrder.mutateAsync({
                     ...addForm,
                     client_id: Number(addForm.client_id),
                     total_price: Number(addForm.total_price),

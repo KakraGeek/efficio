@@ -199,18 +199,14 @@ export const appRouter = t.router({
         method: z.string().optional(),
         status: z.string().nullable().optional(),
         transaction_ref: z.string().nullable().optional(),
-        payment_type: z.string().optional(),
-        payment_balance: z.number().optional(),
-        // ...other payment fields...
       })
     )
     .mutation(async ({ ctx, input }) => {
       if (!ctx.userId) throw new Error('Not authenticated');
       const { id, ...updates } = input;
-      // payments table does not have updated_at
       const [payment] = await db
         .update(payments)
-        .set(updates)
+        .set({ ...updates, updated_at: new Date() })
         .where(eq(payments.id, id))
         .returning();
       return payment;
@@ -242,6 +238,60 @@ export const appRouter = t.router({
     .mutation(async ({ input }) => {
       if (input.ids.length === 0) return;
       return db.delete(inventory).where(inArray(inventory.id, input.ids));
+    }),
+
+  // Add payment mutations
+  createPayment: t.procedure
+    .input(
+      z.object({
+        order_id: z.number(),
+        amount: z.number(),
+        method: z.string(),
+        status: z.string().nullable().optional(),
+        transaction_ref: z.string().nullable().optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      if (!ctx.userId) throw new Error('Not authenticated');
+      const [payment] = await db
+        .insert(payments)
+        .values({
+          ...input,
+          user_id: ctx.userId,
+        })
+        .returning();
+      return payment;
+    }),
+
+  deletePayment: t.procedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      if (!ctx.userId) throw new Error('Not authenticated');
+      return db.delete(payments).where(eq(payments.id, input.id));
+    }),
+
+  bulkDeletePayments: t.procedure
+    .input(z.object({ ids: z.array(z.number()) }))
+    .mutation(async ({ ctx, input }) => {
+      if (!ctx.userId) throw new Error('Not authenticated');
+      if (input.ids.length === 0) return;
+      return db.delete(payments).where(inArray(payments.id, input.ids));
+    }),
+
+  // Add order mutations
+  deleteOrder: t.procedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      if (!ctx.userId) throw new Error('Not authenticated');
+      return db.delete(orders).where(eq(orders.id, input.id));
+    }),
+
+  bulkDeleteOrders: t.procedure
+    .input(z.object({ ids: z.array(z.number()) }))
+    .mutation(async ({ ctx, input }) => {
+      if (!ctx.userId) throw new Error('Not authenticated');
+      if (input.ids.length === 0) return;
+      return db.delete(orders).where(inArray(orders.id, input.ids));
     }),
 });
 

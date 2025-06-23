@@ -200,11 +200,16 @@ const PaymentsTable: React.FC = () => {
     if (!filteredData) return [];
     if (!sortState.column) return filteredData;
     const sorted = [...filteredData].sort((a, b) => {
-      const aValue = a[sortState.column as keyof PaymentRow];
-      const bValue = b[sortState.column as keyof PaymentRow];
+      // Handle renderActions column separately
+      if (sortState.column === 'renderActions') return 0;
+      
+      const aValue = a[sortState.column as keyof Payment];
+      const bValue = b[sortState.column as keyof Payment];
+      
       if (aValue === bValue) return 0;
       if (aValue === null || aValue === undefined) return 1;
       if (bValue === null || bValue === undefined) return -1;
+      
       if (typeof aValue === 'number' && typeof bValue === 'number') {
         return sortState.direction === 'asc'
           ? aValue - bValue
@@ -217,69 +222,71 @@ const PaymentsTable: React.FC = () => {
     return sorted;
   }, [filteredData, sortState]);
 
+  // Add renderActions to each row
+  const dataWithActions: PaymentRow[] = useMemo(() => {
+    return sortedData.map((row) => ({
+      ...row,
+      renderActions: () => (
+        <div className="flex gap-2">
+          <button
+            className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 text-sm"
+            onClick={() => {
+              setPaymentToView(row);
+              setViewModalOpen(true);
+            }}
+          >
+            View
+          </button>
+          <button
+            className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600 text-sm"
+            onClick={() => {
+              setPaymentToEdit(row);
+              setEditForm(row);
+              setEditModalOpen(true);
+            }}
+          >
+            Edit
+          </button>
+          <button
+            className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-sm"
+            onClick={() => {
+              setPaymentToDelete(row);
+              setDeleteModalOpen(true);
+            }}
+          >
+            Delete
+          </button>
+          {row.pendingSync && (
+            <span className="ml-2 px-2 py-0.5 bg-yellow-400 text-xs rounded">
+              Pending Sync
+            </span>
+          )}
+        </div>
+      ),
+    }));
+  }, [sortedData]);
+
   // Pagination logic
-  const totalRows = sortedData.length;
+  const totalRows = dataWithActions.length;
   const totalPages = Math.ceil(totalRows / rowsPerPage) || 1;
   const paginatedData = useMemo(() => {
     const start = (currentPage - 1) * rowsPerPage;
-    return sortedData.slice(start, start + rowsPerPage);
-  }, [sortedData, currentPage, rowsPerPage]);
-
-  // Only add renderActions after all filtering, sorting, and pagination
-  const paginatedDataWithActions: PaymentRow[] = paginatedData.map((row) => ({
-    ...row,
-    renderActions: () => (
-      <>
-        <button
-          className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 text-sm"
-          onClick={() => {
-            setPaymentToView(row);
-            setViewModalOpen(true);
-          }}
-        >
-          View
-        </button>
-        <button
-          className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600 text-sm ml-2"
-          onClick={() => {
-            setPaymentToEdit(row);
-            setEditForm(row);
-            setEditModalOpen(true);
-          }}
-        >
-          Edit
-        </button>
-        <button
-          className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-sm ml-2"
-          onClick={() => {
-            setPaymentToDelete(row);
-            setDeleteModalOpen(true);
-          }}
-        >
-          Delete
-        </button>
-        {row.pendingSync && (
-          <span className="ml-2 px-2 py-0.5 bg-yellow-400 text-xs rounded">
-            Pending Sync
-          </span>
-        )}
-      </>
-    ),
-  }));
+    return dataWithActions.slice(start, start + rowsPerPage);
+  }, [dataWithActions, currentPage, rowsPerPage]);
 
   // Bulk selection column with working select-all and indeterminate state
   const selectAllRef = React.useRef<HTMLInputElement>(null);
   React.useEffect(() => {
     if (selectAllRef.current) {
       const allSelected =
-        paginatedDataWithActions.length > 0 &&
-        paginatedDataWithActions.every((row) => selectedIds.includes(row.id));
-      const someSelected = paginatedDataWithActions.some((row) =>
+        paginatedData.length > 0 &&
+        paginatedData.every((row) => selectedIds.includes(row.id));
+      const someSelected = paginatedData.some((row) =>
         selectedIds.includes(row.id)
       );
       selectAllRef.current.indeterminate = someSelected && !allSelected;
     }
-  }, [paginatedDataWithActions, selectedIds]);
+  }, [paginatedData, selectedIds]);
 
   const columnsWithBulk: Column<PaymentRow>[] = [
     {
@@ -291,14 +298,14 @@ const PaymentsTable: React.FC = () => {
           aria-label="Select all"
           ref={selectAllRef}
           checked={
-            paginatedDataWithActions.length > 0 &&
-            paginatedDataWithActions.every((row) =>
+            paginatedData.length > 0 &&
+            paginatedData.every((row) =>
               selectedIds.includes(row.id)
             )
           }
           onChange={(e) => {
             if (e.target.checked) {
-              setSelectedIds(paginatedDataWithActions.map((row) => row.id));
+              setSelectedIds(paginatedData.map((row) => row.id));
             } else {
               setSelectedIds([]);
             }
@@ -417,7 +424,7 @@ const PaymentsTable: React.FC = () => {
       </div>
       <DataTable
         columns={columnsWithBulk}
-        data={paginatedDataWithActions}
+        data={paginatedData}
         onSort={handleSort}
         sortState={sortState}
       />
