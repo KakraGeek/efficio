@@ -64,7 +64,7 @@ function isInventoryItemKey(
     'low_stock_alert',
     'created_at',
     'updated_at',
-    'pendingSync'
+    'pendingSync',
   ].includes(key as string);
 }
 
@@ -85,9 +85,9 @@ const InventoryTable: React.FC = () => {
   // Ensure each item has the pendingSync property
   const data = useMemo(() => {
     if (!rawData) return [];
-    return rawData.map(item => ({
+    return rawData.map((item) => ({
       ...item,
-      pendingSync: false
+      pendingSync: false,
     }));
   }, [rawData]);
 

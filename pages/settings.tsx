@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
+import Image from 'next/image';
 
 export default function SettingsPage() {
   const [businessName, setBusinessName] = useState('');
@@ -249,7 +250,13 @@ export default function SettingsPage() {
         />
       </div>
       {logoPreview && (
-        <img src={logoPreview} alt="Logo Preview" className="h-16 my-2" />
+        <Image
+          src={logoPreview}
+          alt="Logo Preview"
+          width={64}
+          height={64}
+          className="h-16 my-2 object-contain"
+        />
       )}
       <div className="flex gap-2 mt-4 justify-center">
         <button

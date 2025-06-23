@@ -3,6 +3,7 @@ import DataTable, { Column, SortState } from './DataTable';
 import { trpc } from '../utils/trpc';
 import Modal from './Modal';
 import toast from 'react-hot-toast';
+import Image from 'next/image';
 
 // Define the shape of an order object (should match your DB schema)
 interface Order {
@@ -98,10 +99,10 @@ const OrdersTable: React.FC = () => {
   // Ensure each order has the pendingSync property
   const data = useMemo(() => {
     if (!rawData) return [];
-    return rawData.map(order => ({
+    return rawData.map((order) => ({
       ...order,
       pendingSync: false,
-      image_url: order.image_url || null
+      image_url: order.image_url || null,
     }));
   }, [rawData]);
 
@@ -143,7 +144,10 @@ const OrdersTable: React.FC = () => {
     },
   });
   console.log('OrdersTable data:', data);
-  const [sortState, setSortState] = useState<SortState<OrderRow>>({ column: null, direction: 'asc' });
+  const [sortState, setSortState] = useState<SortState<OrderRow>>({
+    column: null,
+    direction: 'asc',
+  });
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -955,9 +959,11 @@ const OrdersTable: React.FC = () => {
               className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
             />
             {addImagePreview && (
-              <img
+              <Image
                 src={addImagePreview}
                 alt="Order Preview"
+                width={80}
+                height={80}
                 className="mt-3 h-20 object-contain rounded border"
               />
             )}

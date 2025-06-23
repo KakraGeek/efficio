@@ -79,11 +79,11 @@ const PaymentsTable: React.FC = () => {
   // Ensure each payment has the pendingSync property and correct types
   const data = useMemo(() => {
     if (!rawData) return [];
-    return rawData.map(payment => ({
+    return rawData.map((payment) => ({
       ...payment,
       payment_type: payment.payment_type || null,
       payment_balance: payment.payment_balance || null,
-      pendingSync: false
+      pendingSync: false,
     }));
   }, [rawData]);
 
