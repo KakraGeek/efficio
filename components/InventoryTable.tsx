@@ -15,7 +15,7 @@ interface InventoryItem {
   low_stock_alert: number | null;
   created_at: string;
   updated_at: string;
-  pendingSync?: boolean;
+  pendingSync: boolean;
 }
 
 // Extend InventoryItem for table data to include renderActions
@@ -64,6 +64,7 @@ function isInventoryItemKey(
     'low_stock_alert',
     'created_at',
     'updated_at',
+    'pendingSync'
   ].includes(key as string);
 }
 
@@ -79,7 +80,17 @@ function formatDateBritish(dateValue: string | Date) {
  * InventoryTable fetches and displays real inventory data using tRPC.
  */
 const InventoryTable: React.FC = () => {
-  const { data, isLoading, error } = trpc.getInventory.useQuery();
+  const { data: rawData, isLoading, error } = trpc.getInventory.useQuery();
+  
+  // Ensure each item has the pendingSync property
+  const data = useMemo(() => {
+    if (!rawData) return [];
+    return rawData.map(item => ({
+      ...item,
+      pendingSync: false
+    }));
+  }, [rawData]);
+
   const utils = trpc.useContext();
   const createInventoryItem = trpc.createInventoryItem.useMutation({
     onSuccess: () => {
@@ -185,7 +196,9 @@ const InventoryTable: React.FC = () => {
         ) as Column<InventoryItem>[];
         return filterableColumns.some((col) => {
           const key = col.accessor as keyof InventoryItem;
-          const value = row[key];
+          // Cast row to InventoryItem to handle optional properties
+          const typedRow = row as InventoryItem;
+          const value = typedRow[key];
           if (value === null || value === undefined) return false;
           return String(value).toLowerCase().includes(term);
         });
