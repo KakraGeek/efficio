@@ -1,4 +1,5 @@
 import { useUser } from '@clerk/nextjs';
+import { RedirectToSignIn } from '@clerk/nextjs';
 
 export function RequireAuth({ children }: { children: React.ReactNode }) {
   const { isLoaded, isSignedIn } = useUser();
@@ -7,7 +8,7 @@ export function RequireAuth({ children }: { children: React.ReactNode }) {
     return <div className="p-8 text-center">Loading authentication...</div>;
   }
   if (!isSignedIn) {
-    return <div className="p-8 text-center">Redirecting...</div>;
+    return <RedirectToSignIn />;
   }
   return <>{children}</>;
 }

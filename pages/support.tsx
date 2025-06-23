@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { RequireAuth } from '../components/RequireAuth';
 import {
   QuestionMarkCircleIcon,
   PhoneIcon,
@@ -62,79 +63,81 @@ const SupportPage: React.FC = () => {
   };
 
   return (
-    <div className="max-w-md mx-auto p-6 mt-10">
-      {/* Card container */}
-      <div className="bg-white rounded-2xl shadow-lg p-8 relative">
-        {/* Icon and header */}
-        <div className="flex flex-col items-center mb-8">
-          <div className="bg-blue-100 p-3 rounded-full mb-2">
-            <QuestionMarkCircleIcon className="h-8 w-8 text-blue-600" />
+    <RequireAuth>
+      <div className="max-w-md mx-auto p-6 mt-10">
+        {/* Card container */}
+        <div className="bg-white rounded-2xl shadow-lg p-8 relative">
+          {/* Icon and header */}
+          <div className="flex flex-col items-center mb-8">
+            <div className="bg-blue-100 p-3 rounded-full mb-2">
+              <QuestionMarkCircleIcon className="h-8 w-8 text-blue-600" />
+            </div>
+            <h1 className="text-3xl font-bold text-gray-800">Help & Support</h1>
+            <p className="text-gray-500 mt-1">
+              Find answers or contact us for help
+            </p>
           </div>
-          <h1 className="text-3xl font-bold text-gray-800">Help & Support</h1>
-          <p className="text-gray-500 mt-1">
-            Find answers or contact us for help
-          </p>
-        </div>
-        {/* FAQ Accordion */}
-        <section className="mb-8">
-          <h2 className="text-lg font-semibold mb-4 text-blue-700 text-center">
-            Frequently Asked Questions
-          </h2>
-          <ul className="space-y-3 max-w-md mx-auto">
-            {faqs.map((faq, idx) => (
-              <li key={idx} className="border rounded-lg max-w-md mx-auto">
-                <button
-                  className="w-full flex justify-between items-center px-0 py-2 text-left focus:outline-none focus:ring-2 focus:ring-blue-300"
-                  onClick={() => toggleFAQ(idx)}
-                  aria-expanded={openIndex === idx}
-                >
-                  <span className="font-medium text-gray-900 text-left flex-1">
-                    {faq.question}
-                  </span>
-                  <span
-                    className={`ml-1 transform transition-transform ${openIndex === idx ? 'rotate-90' : ''}`}
-                    style={{ minWidth: 20, textAlign: 'right' }}
+          {/* FAQ Accordion */}
+          <section className="mb-8">
+            <h2 className="text-lg font-semibold mb-4 text-blue-700 text-center">
+              Frequently Asked Questions
+            </h2>
+            <ul className="space-y-3 max-w-md mx-auto">
+              {faqs.map((faq, idx) => (
+                <li key={idx} className="border rounded-lg max-w-md mx-auto">
+                  <button
+                    className="w-full flex justify-between items-center px-0 py-2 text-left focus:outline-none focus:ring-2 focus:ring-blue-300"
+                    onClick={() => toggleFAQ(idx)}
+                    aria-expanded={openIndex === idx}
                   >
-                    ▶
-                  </span>
-                </button>
-                {openIndex === idx && (
-                  <div className="pb-2 text-gray-700 animate-fade-in">
-                    {faq.answer}
-                  </div>
-                )}
-              </li>
-            ))}
-          </ul>
-        </section>
-        {/* Contact Info */}
-        <section>
-          <h2 className="text-lg font-semibold mb-2 text-blue-700">
-            Contact Technical Support
-          </h2>
-          <div className="flex items-center text-gray-700 mb-1">
-            <PhoneIcon className="h-5 w-5 text-blue-500 mr-2" />
-            <span className="font-medium">Telephone:</span>{' '}
-            <a
-              href="tel:0244299095"
-              className="text-blue-600 hover:underline ml-1"
-            >
-              024.429.9095
-            </a>
-          </div>
-          <div className="flex items-center text-gray-700">
-            <EnvelopeIcon className="h-5 w-5 text-blue-500 mr-2" />
-            <span className="font-medium">Email:</span>{' '}
-            <a
-              href="mailto:thegeektoolbox@gmail.com"
-              className="text-blue-600 hover:underline ml-1"
-            >
-              thegeektoolbox@gmail.com
-            </a>
-          </div>
-        </section>
+                    <span className="font-medium text-gray-900 text-left flex-1">
+                      {faq.question}
+                    </span>
+                    <span
+                      className={`ml-1 transform transition-transform ${openIndex === idx ? 'rotate-90' : ''}`}
+                      style={{ minWidth: 20, textAlign: 'right' }}
+                    >
+                      ▶
+                    </span>
+                  </button>
+                  {openIndex === idx && (
+                    <div className="pb-2 text-gray-700 animate-fade-in">
+                      {faq.answer}
+                    </div>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </section>
+          {/* Contact Info */}
+          <section>
+            <h2 className="text-lg font-semibold mb-2 text-blue-700">
+              Contact Technical Support
+            </h2>
+            <div className="flex items-center text-gray-700 mb-1">
+              <PhoneIcon className="h-5 w-5 text-blue-500 mr-2" />
+              <span className="font-medium">Telephone:</span>{' '}
+              <a
+                href="tel:0244299095"
+                className="text-blue-600 hover:underline ml-1"
+              >
+                024.429.9095
+              </a>
+            </div>
+            <div className="flex items-center text-gray-700">
+              <EnvelopeIcon className="h-5 w-5 text-blue-500 mr-2" />
+              <span className="font-medium">Email:</span>{' '}
+              <a
+                href="mailto:thegeektoolbox@gmail.com"
+                className="text-blue-600 hover:underline ml-1"
+              >
+                thegeektoolbox@gmail.com
+              </a>
+            </div>
+          </section>
+        </div>
       </div>
-    </div>
+    </RequireAuth>
   );
 };
 

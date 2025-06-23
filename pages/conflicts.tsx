@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { RequireAuth } from '../components/RequireAuth';
 import {
   getConflictedClients,
   getConflictedOrders,
@@ -158,56 +159,58 @@ export default function ConflictsPage() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto p-6">
-      <h2 className="text-2xl font-bold mb-6">Resolve Data Conflicts</h2>
-      <ConflictTable
-        title="Client Conflicts"
-        conflicts={clientConflicts}
-        onResolve={(conflict, choice) =>
-          handleResolve('client', conflict, choice)
-        }
-        fields={['name', 'phone', 'email', 'notes']}
-      />
-      <ConflictTable
-        title="Order Conflicts"
-        conflicts={orderConflicts}
-        onResolve={(conflict, choice) =>
-          handleResolve('order', conflict, choice)
-        }
-        fields={['description', 'status', 'due_date', 'total_price']}
-      />
-      <ConflictTable
-        title="Inventory Conflicts"
-        conflicts={inventoryConflicts}
-        onResolve={(conflict, choice) =>
-          handleResolve('inventory', conflict, choice)
-        }
-        fields={['name', 'category', 'quantity', 'unit']}
-      />
-      <ConflictTable
-        title="Payment Conflicts"
-        conflicts={paymentConflicts}
-        onResolve={(conflict, choice) =>
-          handleResolve('payment', conflict, choice)
-        }
-        fields={[
-          'amount',
-          'method',
-          'status',
-          'payment_type',
-          'payment_balance',
-        ]}
-      />
-      {/* Add a message if no conflicts */}
-      {clientConflicts.length +
-        orderConflicts.length +
-        inventoryConflicts.length +
-        paymentConflicts.length ===
-        0 && (
-        <div className="text-green-700 font-semibold text-center py-8">
-          No conflicts to resolve! 🎉
-        </div>
-      )}
-    </div>
+    <RequireAuth>
+      <div className="max-w-2xl mx-auto p-6">
+        <h2 className="text-2xl font-bold mb-6">Resolve Data Conflicts</h2>
+        <ConflictTable
+          title="Client Conflicts"
+          conflicts={clientConflicts}
+          onResolve={(conflict, choice) =>
+            handleResolve('client', conflict, choice)
+          }
+          fields={['name', 'phone', 'email', 'notes']}
+        />
+        <ConflictTable
+          title="Order Conflicts"
+          conflicts={orderConflicts}
+          onResolve={(conflict, choice) =>
+            handleResolve('order', conflict, choice)
+          }
+          fields={['description', 'status', 'due_date', 'total_price']}
+        />
+        <ConflictTable
+          title="Inventory Conflicts"
+          conflicts={inventoryConflicts}
+          onResolve={(conflict, choice) =>
+            handleResolve('inventory', conflict, choice)
+          }
+          fields={['name', 'category', 'quantity', 'unit']}
+        />
+        <ConflictTable
+          title="Payment Conflicts"
+          conflicts={paymentConflicts}
+          onResolve={(conflict, choice) =>
+            handleResolve('payment', conflict, choice)
+          }
+          fields={[
+            'amount',
+            'method',
+            'status',
+            'payment_type',
+            'payment_balance',
+          ]}
+        />
+        {/* Add a message if no conflicts */}
+        {clientConflicts.length +
+          orderConflicts.length +
+          inventoryConflicts.length +
+          paymentConflicts.length ===
+          0 && (
+          <div className="text-green-700 font-semibold text-center py-8">
+            No conflicts to resolve! 🎉
+          </div>
+        )}
+      </div>
+    </RequireAuth>
   );
 }

@@ -5,6 +5,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { trpc } from '../utils/trpc';
 import toast from 'react-hot-toast';
+import { RequireAuth } from '../components/RequireAuth';
 
 const clientReports = [
   { label: 'Select a report...', value: '' },
@@ -276,266 +277,228 @@ export default function ReportsPage() {
   }
 
   return (
-    <div className="p-6 max-w-5xl mx-auto">
-      <h1 className="text-2xl font-bold mb-6 text-black">Reports</h1>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {/* Clients */}
-        <div className="bg-white rounded-lg shadow p-6 border border-gray-100">
-          <h2 className="text-xl font-semibold mb-2 text-gray-800">
-            Clients Summary
-          </h2>
-          <select
-            className="mb-4 border rounded px-2 py-1 text-sm"
-            value={clientReport}
-            onChange={(e) => setClientReport(e.target.value)}
-          >
-            {clientReports.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
-          <div className="mb-4">
-            <Table data={clientData} columns={clientColumns} />
-          </div>
-          <div className="flex gap-2 items-center mt-2">
-            <label className="text-sm text-gray-700">Export as:</label>
+    <RequireAuth>
+      <div className="p-6 max-w-5xl mx-auto">
+        <h1 className="text-2xl font-bold mb-6 text-black">Reports</h1>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          {/* Clients */}
+          <div className="bg-white rounded-lg shadow p-6 border border-gray-100">
+            <h2 className="text-xl font-semibold mb-2 text-gray-800">Clients Summary</h2>
             <select
-              className="border rounded px-2 py-1 text-sm"
-              value={clientExportFormat}
-              onChange={(e) =>
-                setClientExportFormat(e.target.value as 'csv' | 'pdf')
-              }
-              disabled={!clientReport}
+              className="mb-4 border rounded px-2 py-1 text-sm"
+              value={clientReport}
+              onChange={(e) => setClientReport(e.target.value)}
             >
-              <option value="csv">CSV</option>
-              <option value="pdf">PDF</option>
+              {clientReports.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
             </select>
-            <a
-              href="#"
-              onClick={(e) => {
-                if (!clientReport) {
-                  e.preventDefault();
-                  return;
-                }
-                clientExportFormat === 'csv'
-                  ? exportCSV(clientData, clientColumns, 'clients-report.csv')
-                  : exportPDF(clientData, clientColumns, 'clients-report.csv');
-              }}
-              className={
-                !clientReport
-                  ? 'text-gray-400 cursor-not-allowed pointer-events-none underline text-base font-semibold'
-                  : 'text-blue-600 hover:text-blue-800 underline text-base font-semibold'
-              }
-              tabIndex={!clientReport ? -1 : 0}
-              aria-disabled={!clientReport}
-            >
-              {`Export as ${clientExportFormat.toUpperCase()}`}
-            </a>
-          </div>
-          {!clientReport && (
-            <div className="text-gray-500 text-sm italic">
-              Select a report to view.
+            <div className="mb-4">
+              <Table data={clientData} columns={clientColumns} />
             </div>
-          )}
-        </div>
-        {/* Orders */}
-        <div className="bg-white rounded-lg shadow p-6 border border-gray-100">
-          <h2 className="text-xl font-semibold mb-2 text-gray-800">
-            Orders Report
-          </h2>
-          <select
-            className="mb-4 border rounded px-2 py-1 text-sm"
-            value={orderReport}
-            onChange={(e) => setOrderReport(e.target.value)}
-          >
-            {orderReports.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
-          <div className="mb-4">
-            <Table data={orderData} columns={orderColumns} />
+            <div className="flex gap-2 items-center mt-2">
+              <label className="text-sm text-gray-700">Export as:</label>
+              <select
+                className="border rounded px-2 py-1 text-sm"
+                value={clientExportFormat}
+                onChange={(e) => setClientExportFormat(e.target.value as 'csv' | 'pdf')}
+                disabled={!clientReport}
+              >
+                <option value="csv">CSV</option>
+                <option value="pdf">PDF</option>
+              </select>
+              <a
+                href="#"
+                onClick={(e) => {
+                  if (!clientReport) {
+                    e.preventDefault();
+                    return;
+                  }
+                  clientExportFormat === 'csv'
+                    ? exportCSV(clientData, clientColumns, 'clients-report.csv')
+                    : exportPDF(clientData, clientColumns, 'clients-report.csv');
+                }}
+                className={
+                  !clientReport
+                    ? 'text-gray-400 cursor-not-allowed pointer-events-none underline text-base font-semibold'
+                    : 'text-blue-600 hover:text-blue-800 underline text-base font-semibold'
+                }
+                tabIndex={!clientReport ? -1 : 0}
+                aria-disabled={!clientReport}
+              >
+                {`Export as ${clientExportFormat.toUpperCase()}`}
+              </a>
+            </div>
+            {!clientReport && (
+              <div className="text-gray-500 text-sm italic">Select a report to view.</div>
+            )}
           </div>
-          <div className="flex gap-2 items-center mt-2">
-            <label className="text-sm text-gray-700">Export as:</label>
+          {/* Orders */}
+          <div className="bg-white rounded-lg shadow p-6 border border-gray-100">
+            <h2 className="text-xl font-semibold mb-2 text-gray-800">Orders Report</h2>
             <select
-              className="border rounded px-2 py-1 text-sm"
-              value={orderExportFormat}
-              onChange={(e) =>
-                setOrderExportFormat(e.target.value as 'csv' | 'pdf')
-              }
-              disabled={!orderReport}
+              className="mb-4 border rounded px-2 py-1 text-sm"
+              value={orderReport}
+              onChange={(e) => setOrderReport(e.target.value)}
             >
-              <option value="csv">CSV</option>
-              <option value="pdf">PDF</option>
+              {orderReports.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
             </select>
-            <a
-              href="#"
-              onClick={(e) => {
-                if (!orderReport) {
-                  e.preventDefault();
-                  return;
-                }
-                orderExportFormat === 'csv'
-                  ? exportCSV(orderData, orderColumns, 'orders-report.csv')
-                  : exportPDF(orderData, orderColumns, 'orders-report.csv');
-              }}
-              className={
-                !orderReport
-                  ? 'text-gray-400 cursor-not-allowed pointer-events-none underline text-base font-semibold'
-                  : 'text-blue-600 hover:text-blue-800 underline text-base font-semibold'
-              }
-              tabIndex={!orderReport ? -1 : 0}
-              aria-disabled={!orderReport}
-            >
-              {`Export as ${orderExportFormat.toUpperCase()}`}
-            </a>
-          </div>
-          {!orderReport && (
-            <div className="text-gray-500 text-sm italic">
-              Select a report to view.
+            <div className="mb-4">
+              <Table data={orderData} columns={orderColumns} />
             </div>
-          )}
-        </div>
-        {/* Payments */}
-        <div className="bg-white rounded-lg shadow p-6 border border-gray-100">
-          <h2 className="text-xl font-semibold mb-2 text-gray-800">
-            Payments Report
-          </h2>
-          <select
-            className="mb-4 border rounded px-2 py-1 text-sm"
-            value={paymentReport}
-            onChange={(e) => setPaymentReport(e.target.value)}
-          >
-            {paymentReports.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
-          <div className="mb-4">
-            <Table data={paymentData} columns={paymentColumns} />
+            <div className="flex gap-2 items-center mt-2">
+              <label className="text-sm text-gray-700">Export as:</label>
+              <select
+                className="border rounded px-2 py-1 text-sm"
+                value={orderExportFormat}
+                onChange={(e) => setOrderExportFormat(e.target.value as 'csv' | 'pdf')}
+                disabled={!orderReport}
+              >
+                <option value="csv">CSV</option>
+                <option value="pdf">PDF</option>
+              </select>
+              <a
+                href="#"
+                onClick={(e) => {
+                  if (!orderReport) {
+                    e.preventDefault();
+                    return;
+                  }
+                  orderExportFormat === 'csv'
+                    ? exportCSV(orderData, orderColumns, 'orders-report.csv')
+                    : exportPDF(orderData, orderColumns, 'orders-report.csv');
+                }}
+                className={
+                  !orderReport
+                    ? 'text-gray-400 cursor-not-allowed pointer-events-none underline text-base font-semibold'
+                    : 'text-blue-600 hover:text-blue-800 underline text-base font-semibold'
+                }
+                tabIndex={!orderReport ? -1 : 0}
+                aria-disabled={!orderReport}
+              >
+                {`Export as ${orderExportFormat.toUpperCase()}`}
+              </a>
+            </div>
+            {!orderReport && (
+              <div className="text-gray-500 text-sm italic">Select a report to view.</div>
+            )}
           </div>
-          <div className="flex gap-2 items-center mt-2">
-            <label className="text-sm text-gray-700">Export as:</label>
+          {/* Payments */}
+          <div className="bg-white rounded-lg shadow p-6 border border-gray-100">
+            <h2 className="text-xl font-semibold mb-2 text-gray-800">Payments Report</h2>
             <select
-              className="border rounded px-2 py-1 text-sm"
-              value={paymentExportFormat}
-              onChange={(e) =>
-                setPaymentExportFormat(e.target.value as 'csv' | 'pdf')
-              }
-              disabled={!paymentReport}
+              className="mb-4 border rounded px-2 py-1 text-sm"
+              value={paymentReport}
+              onChange={(e) => setPaymentReport(e.target.value)}
             >
-              <option value="csv">CSV</option>
-              <option value="pdf">PDF</option>
+              {paymentReports.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
             </select>
-            <a
-              href="#"
-              onClick={(e) => {
-                if (!paymentReport) {
-                  e.preventDefault();
-                  return;
-                }
-                paymentExportFormat === 'csv'
-                  ? exportCSV(
-                      paymentData,
-                      paymentColumns,
-                      'payments-report.csv'
-                    )
-                  : exportPDF(
-                      paymentData,
-                      paymentColumns,
-                      'payments-report.csv'
-                    );
-              }}
-              className={
-                !paymentReport
-                  ? 'text-gray-400 cursor-not-allowed pointer-events-none underline text-base font-semibold'
-                  : 'text-blue-600 hover:text-blue-800 underline text-base font-semibold'
-              }
-              tabIndex={!paymentReport ? -1 : 0}
-              aria-disabled={!paymentReport}
-            >
-              {`Export as ${paymentExportFormat.toUpperCase()}`}
-            </a>
-          </div>
-          {!paymentReport && (
-            <div className="text-gray-500 text-sm italic">
-              Select a report to view.
+            <div className="mb-4">
+              <Table data={paymentData} columns={paymentColumns} />
             </div>
-          )}
-        </div>
-        {/* Inventory */}
-        <div className="bg-white rounded-lg shadow p-6 border border-gray-100">
-          <h2 className="text-xl font-semibold mb-2 text-gray-800">
-            Inventory Report
-          </h2>
-          <select
-            className="mb-4 border rounded px-2 py-1 text-sm"
-            value={inventoryReport}
-            onChange={(e) => setInventoryReport(e.target.value)}
-          >
-            {inventoryReports.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
-          <div className="mb-4">
-            <Table data={inventoryData} columns={inventoryColumns} />
+            <div className="flex gap-2 items-center mt-2">
+              <label className="text-sm text-gray-700">Export as:</label>
+              <select
+                className="border rounded px-2 py-1 text-sm"
+                value={paymentExportFormat}
+                onChange={(e) => setPaymentExportFormat(e.target.value as 'csv' | 'pdf')}
+                disabled={!paymentReport}
+              >
+                <option value="csv">CSV</option>
+                <option value="pdf">PDF</option>
+              </select>
+              <a
+                href="#"
+                onClick={(e) => {
+                  if (!paymentReport) {
+                    e.preventDefault();
+                    return;
+                  }
+                  paymentExportFormat === 'csv'
+                    ? exportCSV(paymentData, paymentColumns, 'payments-report.csv')
+                    : exportPDF(paymentData, paymentColumns, 'payments-report.csv');
+                }}
+                className={
+                  !paymentReport
+                    ? 'text-gray-400 cursor-not-allowed pointer-events-none underline text-base font-semibold'
+                    : 'text-blue-600 hover:text-blue-800 underline text-base font-semibold'
+                }
+                tabIndex={!paymentReport ? -1 : 0}
+                aria-disabled={!paymentReport}
+              >
+                {`Export as ${paymentExportFormat.toUpperCase()}`}
+              </a>
+            </div>
+            {!paymentReport && (
+              <div className="text-gray-500 text-sm italic">Select a report to view.</div>
+            )}
           </div>
-          <div className="flex gap-2 items-center mt-2">
-            <label className="text-sm text-gray-700">Export as:</label>
+          {/* Inventory */}
+          <div className="bg-white rounded-lg shadow p-6 border border-gray-100">
+            <h2 className="text-xl font-semibold mb-2 text-gray-800">Inventory Report</h2>
             <select
-              className="border rounded px-2 py-1 text-sm"
-              value={inventoryExportFormat}
-              onChange={(e) =>
-                setInventoryExportFormat(e.target.value as 'csv' | 'pdf')
-              }
-              disabled={!inventoryReport}
+              className="mb-4 border rounded px-2 py-1 text-sm"
+              value={inventoryReport}
+              onChange={(e) => setInventoryReport(e.target.value)}
             >
-              <option value="csv">CSV</option>
-              <option value="pdf">PDF</option>
+              {inventoryReports.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
             </select>
-            <a
-              href="#"
-              onClick={(e) => {
-                if (!inventoryReport) {
-                  e.preventDefault();
-                  return;
-                }
-                inventoryExportFormat === 'csv'
-                  ? exportCSV(
-                      inventoryData,
-                      inventoryColumns,
-                      'inventory-report.csv'
-                    )
-                  : exportPDF(
-                      inventoryData,
-                      inventoryColumns,
-                      'inventory-report.csv'
-                    );
-              }}
-              className={
-                !inventoryReport
-                  ? 'text-gray-400 cursor-not-allowed pointer-events-none underline text-base font-semibold'
-                  : 'text-blue-600 hover:text-blue-800 underline text-base font-semibold'
-              }
-              tabIndex={!inventoryReport ? -1 : 0}
-              aria-disabled={!inventoryReport}
-            >
-              {`Export as ${inventoryExportFormat.toUpperCase()}`}
-            </a>
-          </div>
-          {!inventoryReport && (
-            <div className="text-gray-500 text-sm italic">
-              Select a report to view.
+            <div className="mb-4">
+              <Table data={inventoryData} columns={inventoryColumns} />
             </div>
-          )}
+            <div className="flex gap-2 items-center mt-2">
+              <label className="text-sm text-gray-700">Export as:</label>
+              <select
+                className="border rounded px-2 py-1 text-sm"
+                value={inventoryExportFormat}
+                onChange={(e) => setInventoryExportFormat(e.target.value as 'csv' | 'pdf')}
+                disabled={!inventoryReport}
+              >
+                <option value="csv">CSV</option>
+                <option value="pdf">PDF</option>
+              </select>
+              <a
+                href="#"
+                onClick={(e) => {
+                  if (!inventoryReport) {
+                    e.preventDefault();
+                    return;
+                  }
+                  inventoryExportFormat === 'csv'
+                    ? exportCSV(inventoryData, inventoryColumns, 'inventory-report.csv')
+                    : exportPDF(inventoryData, inventoryColumns, 'inventory-report.csv');
+                }}
+                className={
+                  !inventoryReport
+                    ? 'text-gray-400 cursor-not-allowed pointer-events-none underline text-base font-semibold'
+                    : 'text-blue-600 hover:text-blue-800 underline text-base font-semibold'
+                }
+                tabIndex={!inventoryReport ? -1 : 0}
+                aria-disabled={!inventoryReport}
+              >
+                {`Export as ${inventoryExportFormat.toUpperCase()}`}
+              </a>
+            </div>
+            {!inventoryReport && (
+              <div className="text-gray-500 text-sm italic">Select a report to view.</div>
+            )}
+          </div>
         </div>
       </div>
-    </div>
+    </RequireAuth>
   );
 }
