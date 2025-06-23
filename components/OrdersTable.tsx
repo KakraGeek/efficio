@@ -16,7 +16,7 @@ interface Order {
   created_at: string;
   updated_at: string;
   notes?: string;
-  pendingSync?: boolean;
+  pendingSync: boolean;
 }
 
 // Extend Order for table data to include renderActions
@@ -94,7 +94,17 @@ function formatDateBritish(dateValue: string | Date) {
  * OrdersTable fetches and displays real order data using tRPC.
  */
 const OrdersTable: React.FC = () => {
-  const { data, isLoading, error } = trpc.getOrders.useQuery();
+  const { data: rawData, isLoading, error } = trpc.getOrders.useQuery();
+  
+  // Ensure each order has the pendingSync property
+  const data = useMemo(() => {
+    if (!rawData) return [];
+    return rawData.map(order => ({
+      ...order,
+      pendingSync: false
+    }));
+  }, [rawData]);
+
   const utils = trpc.useContext();
   const createOrder = trpc.createOrder.useMutation({
     onSuccess: () => {

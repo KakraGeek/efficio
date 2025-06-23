@@ -15,9 +15,9 @@ interface Payment {
   transaction_ref: string | null;
   created_at: string;
   // Add these optional fields for UI/extra data
-  payment_type?: string;
-  payment_balance?: number;
-  pendingSync?: boolean;
+  payment_type: string | null;
+  payment_balance: number | null;
+  pendingSync: boolean;
 }
 
 // Extend Payment for table data to include renderActions
@@ -74,7 +74,19 @@ function formatDateBritish(dateValue: string | Date) {
  * PaymentsTable fetches and displays real payment data using tRPC.
  */
 const PaymentsTable: React.FC = () => {
-  const { data, isLoading, error } = trpc.getPayments.useQuery();
+  const { data: rawData, isLoading, error } = trpc.getPayments.useQuery();
+  
+  // Ensure each payment has the pendingSync property and correct types
+  const data = useMemo(() => {
+    if (!rawData) return [];
+    return rawData.map(payment => ({
+      ...payment,
+      payment_type: payment.payment_type || null,
+      payment_balance: payment.payment_balance || null,
+      pendingSync: false
+    }));
+  }, [rawData]);
+
   const { data: ordersData } = trpc.getOrders.useQuery();
   const { data: clientsData } = trpc.getClients.useQuery();
   const utils = trpc.useContext();
