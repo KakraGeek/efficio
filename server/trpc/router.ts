@@ -215,6 +215,21 @@ export const appRouter = t.router({
         .returning();
       return payment;
     }),
+
+  createInventoryItem: t.procedure
+    .input(
+      z.object({
+        name: z.string(),
+        category: z.string().optional(),
+        quantity: z.number(),
+        unit: z.string().optional(),
+        low_stock_alert: z.number().optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      if (!ctx.userId) throw new Error('Not authenticated');
+      return db.insert(inventory).values({ ...input, user_id: ctx.userId });
+    }),
 });
 
 // Export type definition of API
