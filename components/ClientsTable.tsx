@@ -367,7 +367,6 @@ const ClientsTable: React.FC = () => {
 
   return (
     <div className="p-4">
-      <h2 className="mb-4 text-lg font-bold">Clients</h2>
       <input
         type="text"
         placeholder="Search clients..."
