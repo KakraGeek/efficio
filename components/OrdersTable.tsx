@@ -74,6 +74,7 @@ const columns: Column<OrderRow>[] = [
     accessor: 'renderActions',
     header: 'Actions',
     render: (_, row) => row.renderActions?.(),
+    sortable: false,
   },
 ];
 
@@ -198,84 +199,9 @@ const OrdersTable: React.FC = () => {
     return Array.from(set);
   }, [data]);
 
-  // Filtering logic (global search + status filter)
-  const filteredData = useMemo(() => {
-    if (!data) return [];
-    let filtered = data;
-    if (statusFilter) {
-      filtered = filtered.filter((row) => row.status === statusFilter);
-    }
-    if (search.trim()) {
-      const term = search.trim().toLowerCase();
-      filtered = filtered.filter((row) =>
-        columns.some((col) => {
-          if (col.accessor === 'renderActions') return false;
-          const key = col.accessor as keyof Order;
-          if (key in row) {
-            const value = row[key as keyof OrderRow];
-            if (value === null || value === undefined) return false;
-            return String(value).toLowerCase().includes(term);
-          }
-          return false;
-        })
-      );
-    }
-    return filtered;
-  }, [data, search, statusFilter]);
-
-  // Sorting logic (applied after filtering)
-  const sortedData = useMemo(() => {
-    if (!filteredData) return [];
-    if (!sortState.column) return filteredData;
-    
-    return [...filteredData].sort((a, b) => {
-      const column = sortState.column;
-      // Skip sorting for renderActions column
-      if (column === 'renderActions') return 0;
-      
-      // Cast objects to Order type to access properties safely
-      const orderA = a as Order;
-      const orderB = b as Order;
-      // Now column is guaranteed to be a keyof Order
-      const key = column as keyof Order;
-      // Check if the key exists in the objects
-      if (!(key in orderA) || !(key in orderB)) return 0;
-      // Get the values using type assertion
-      const aValue = orderA[key as keyof typeof orderA];
-      const bValue = orderB[key as keyof typeof orderB];
-      
-      if (aValue === bValue) return 0;
-      if (aValue === null || aValue === undefined) return 1;
-      if (bValue === null || bValue === undefined) return -1;
-      
-      if (typeof aValue === 'number' && typeof bValue === 'number') {
-        return sortState.direction === 'asc'
-          ? aValue - bValue
-          : bValue - aValue;
-      }
-      return sortState.direction === 'asc'
-        ? String(aValue).localeCompare(String(bValue))
-        : String(bValue).localeCompare(String(aValue));
-    });
-  }, [filteredData, sortState]);
-
-  // Handle sorting
-  const handleSort = (column: string) => {
-    if (column === 'renderActions') return;
-    setSortState((prev) => ({
-      column,
-      direction:
-        prev.column === column
-          ? prev.direction === 'asc'
-            ? 'desc'
-            : 'asc'
-          : 'asc',
-    }));
-  };
-
   // Add renderActions to each row
   const dataWithActions: OrderRow[] = useMemo(() => {
-    return sortedData.map((row) => ({
+    return data.map((row) => ({
       ...row,
       renderActions: () => (
         <div className="flex gap-2">
@@ -315,15 +241,85 @@ const OrdersTable: React.FC = () => {
         </div>
       ),
     }));
-  }, [sortedData]);
+  }, [data]);
+
+  // Filtering logic (global search + status filter)
+  const filteredData: OrderRow[] = useMemo(() => {
+    if (!dataWithActions) return [];
+    let filtered = dataWithActions;
+    if (statusFilter) {
+      filtered = filtered.filter((row) => row.status === statusFilter);
+    }
+    if (search.trim()) {
+      const term = search.trim().toLowerCase();
+      filtered = filtered.filter((row) =>
+        columns.some((col) => {
+          if (col.accessor === 'renderActions') return false;
+          const key = col.accessor as keyof Order;
+          if (key in row) {
+            const value = row[key as keyof OrderRow];
+            if (value === null || value === undefined) return false;
+            return String(value).toLowerCase().includes(term);
+          }
+          return false;
+        })
+      );
+    }
+    return filtered;
+  }, [dataWithActions, search, statusFilter]);
+
+  // Sorting logic (applied after filtering)
+  const sortedData = useMemo(() => {
+    if (!filteredData) return [];
+    if (!sortState.column) return filteredData;
+
+    // Only sort if the column is a real Order field
+    if (sortState.column === 'renderActions') return filteredData;
+
+    // Now we know column is a keyof Order
+    const key = sortState.column as keyof Order;
+
+    return [...filteredData].sort((a, b) => {
+      // Use OrderRow type here so TypeScript knows about renderActions
+      const aValue = (a as OrderRow)[key];
+      const bValue = (b as OrderRow)[key];
+
+      if (aValue === bValue) return 0;
+      if (aValue === null || aValue === undefined) return 1;
+      if (bValue === null || bValue === undefined) return -1;
+
+      if (typeof aValue === 'number' && typeof bValue === 'number') {
+        return sortState.direction === 'asc'
+          ? aValue - bValue
+          : bValue - aValue;
+      }
+      return sortState.direction === 'asc'
+        ? String(aValue).localeCompare(String(bValue))
+        : String(bValue).localeCompare(String(aValue));
+    });
+  }, [filteredData, sortState]);
+
+  // Handle sorting
+  const handleSort = (column: string) => {
+    if (column === 'renderActions') return;
+    setSortState((prev) => ({
+      column,
+      direction:
+        prev.column === column
+          ? prev.direction === 'asc'
+            ? 'desc'
+            : 'asc'
+          : 'asc',
+    }));
+  };
 
   // Pagination logic
   const totalRows = dataWithActions.length;
   const totalPages = Math.ceil(totalRows / rowsPerPage) || 1;
   const paginatedData = useMemo(() => {
     const start = (currentPage - 1) * rowsPerPage;
-    return dataWithActions.slice(start, start + rowsPerPage);
-  }, [dataWithActions, currentPage, rowsPerPage]);
+    return sortedData.slice(start, start + rowsPerPage);
+  }, [sortedData, currentPage, rowsPerPage]);
 
   // Prefill measurements when client changes
   React.useEffect(() => {
@@ -505,7 +501,7 @@ const OrdersTable: React.FC = () => {
           ))}
         </select>
       </div>
-      <DataTable
+      <DataTable<OrderRow>
         columns={columns}
         data={paginatedData}
         onSort={handleSort}
