@@ -1,6 +1,14 @@
 {
   "name": "efficio-starter",
   "version": "0.1.0",
+  "engines": {
+    "node": ">=18.17.0"
+  },
+  "browserslist": [
+    ">0.3%",
+    "not dead",
+    "not op_mini all"
+  ],
   "scripts": {
     "dev": "next dev",
     "build": "next build",
