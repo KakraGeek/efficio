@@ -59,7 +59,10 @@ const columnsWithActions: Column<PaymentRow>[] = [
   },
 ];
 
-const defaultSort: SortState<Payment> = { column: null, direction: 'asc' };
+const defaultSort = {
+  column: null as string | null,
+  direction: 'asc' as 'asc' | 'desc',
+};
 const defaultRowsPerPage = 10;
 
 function formatDateBritish(dateValue: string | Date) {
@@ -127,8 +130,7 @@ const PaymentsTable: React.FC = () => {
     },
   });
   console.log('PaymentsTable data:', data);
-  const [sortState, setSortState] =
-    useState<SortState<PaymentRow>>(defaultSort);
+  const [sortState, setSortState] = useState<typeof defaultSort>(defaultSort);
   const [search, setSearch] = useState('');
   const [methodFilter, setMethodFilter] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -328,15 +330,40 @@ const PaymentsTable: React.FC = () => {
     ...columnsWithActions,
   ];
 
+  // Type guard to check if a value is a key of PaymentRow
+  function isPaymentKey(key: unknown): key is keyof PaymentRow {
+    return (
+      typeof key === 'string' &&
+      [
+        'id',
+        'user_id',
+        'order_id',
+        'amount',
+        'method',
+        'status',
+        'transaction_ref',
+        'created_at',
+        'payment_type',
+        'payment_balance',
+        'pendingSync',
+      ].includes(key)
+    );
+  }
+
   // Handlers
-  const handleSort = (column: keyof PaymentRow) => {
-    if (column === 'renderActions') return;
-    setSortState((prev) => {
-      if (prev.column === column) {
-        return { column, direction: prev.direction === 'asc' ? 'desc' : 'asc' };
-      }
-      return { column, direction: 'asc' };
-    });
+  const handleSort = (column: string) => {
+    // Only allow sorting on valid columns
+    if (isPaymentKey(column)) {
+      setSortState((prev) => {
+        if (prev.column === column) {
+          return {
+            column,
+            direction: prev.direction === 'asc' ? 'desc' : 'asc',
+          };
+        }
+        return { column, direction: 'asc' };
+      });
+    }
   };
   const handlePageChange = (page: number) => {
     setCurrentPage(page);

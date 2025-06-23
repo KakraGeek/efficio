@@ -10,12 +10,31 @@ import {
   updatePayment,
 } from '../lib/indexedDb';
 
-function ConflictTable({ title, conflicts, onResolve, fields }) {
+// Define a generic Conflict type
+interface Conflict {
+  id: number;
+  [key: string]: any;
+  serverVersion?: { [key: string]: any };
+}
+
+interface ConflictTableProps {
+  title: string;
+  conflicts: Conflict[];
+  onResolve: (conflict: Conflict, choice: string) => void;
+  fields: string[];
+}
+
+function ConflictTable({
+  title,
+  conflicts,
+  onResolve,
+  fields,
+}: ConflictTableProps) {
   if (!conflicts.length) return null;
   return (
     <div className="mb-8">
       <h3 className="text-lg font-bold mb-2">{title}</h3>
-      {conflicts.map((conflict) => (
+      {conflicts.map((conflict: Conflict) => (
         <div key={conflict.id} className="mb-6 border-b pb-4">
           <div className="mb-2 font-semibold">ID: {conflict.id}</div>
           <table className="w-full text-sm mb-2">
@@ -27,7 +46,7 @@ function ConflictTable({ title, conflicts, onResolve, fields }) {
               </tr>
             </thead>
             <tbody>
-              {fields.map((field) => (
+              {fields.map((field: string) => (
                 <tr key={field}>
                   <td>{field}</td>
                   <td>{String(conflict[field])}</td>
@@ -57,10 +76,10 @@ function ConflictTable({ title, conflicts, onResolve, fields }) {
 }
 
 export default function ConflictsPage() {
-  const [clientConflicts, setClientConflicts] = useState([]);
-  const [orderConflicts, setOrderConflicts] = useState([]);
-  const [inventoryConflicts, setInventoryConflicts] = useState([]);
-  const [paymentConflicts, setPaymentConflicts] = useState([]);
+  const [clientConflicts, setClientConflicts] = useState<Conflict[]>([]);
+  const [orderConflicts, setOrderConflicts] = useState<Conflict[]>([]);
+  const [inventoryConflicts, setInventoryConflicts] = useState<Conflict[]>([]);
+  const [paymentConflicts, setPaymentConflicts] = useState<Conflict[]>([]);
 
   useEffect(() => {
     getConflictedClients().then(setClientConflicts);
@@ -69,11 +88,13 @@ export default function ConflictsPage() {
     getConflictedPayments().then(setPaymentConflicts);
   }, []);
 
-  const handleResolve = async (type, conflict, choice) => {
+  const handleResolve = async (
+    type: 'client' | 'order' | 'inventory' | 'payment',
+    conflict: Conflict,
+    choice: string
+  ) => {
     if (type === 'client') {
       if (choice === 'local') {
-        // Sync local to server, then mark as resolved
-        // ...sync logic here...
         await updateClient(conflict.id, {
           conflict: false,
           serverVersion: undefined,
@@ -89,7 +110,6 @@ export default function ConflictsPage() {
     }
     if (type === 'order') {
       if (choice === 'local') {
-        // ...sync logic here...
         await updateOrder(conflict.id, {
           conflict: false,
           serverVersion: undefined,
@@ -105,7 +125,6 @@ export default function ConflictsPage() {
     }
     if (type === 'inventory') {
       if (choice === 'local') {
-        // ...sync logic here...
         await updateInventoryItemById(conflict.id, {
           conflict: false,
           serverVersion: undefined,
@@ -123,7 +142,6 @@ export default function ConflictsPage() {
     }
     if (type === 'payment') {
       if (choice === 'local') {
-        // ...sync logic here...
         await updatePayment(conflict.id, {
           conflict: false,
           serverVersion: undefined,

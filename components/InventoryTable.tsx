@@ -47,7 +47,10 @@ const columns: Column<InventoryRow>[] = [
   },
 ];
 
-const defaultSort: SortState<InventoryRow> = { column: null, direction: 'asc' };
+const defaultSort = {
+  column: null as string | null,
+  direction: 'asc' as 'asc' | 'desc',
+};
 const defaultRowsPerPage = 10;
 
 // Helper type guard to check if a value is a key of InventoryItem
@@ -129,8 +132,7 @@ const InventoryTable: React.FC = () => {
     },
   });
   console.log('InventoryTable data:', data);
-  const [sortState, setSortState] =
-    useState<SortState<InventoryRow>>(defaultSort);
+  const [sortState, setSortState] = useState<typeof defaultSort>(defaultSort);
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -425,15 +427,19 @@ const InventoryTable: React.FC = () => {
   ];
 
   // Handlers
-  const handleSort = (column: InventorySortKey) => {
-    // Prevent sorting on the Actions column
-    if (column === 'renderActions') return;
-    setSortState((prev) => {
-      if (prev.column === column) {
-        return { column, direction: prev.direction === 'asc' ? 'desc' : 'asc' };
-      }
-      return { column, direction: 'asc' };
-    });
+  const handleSort = (column: string) => {
+    // Only allow sorting on valid columns
+    if (isInventoryItemKey(column)) {
+      setSortState((prev) => {
+        if (prev.column === column) {
+          return {
+            column,
+            direction: prev.direction === 'asc' ? 'desc' : 'asc',
+          };
+        }
+        return { column, direction: 'asc' };
+      });
+    }
   };
   const handlePageChange = (page: number) => {
     setCurrentPage(page);

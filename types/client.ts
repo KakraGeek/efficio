@@ -24,4 +24,4 @@ export interface Client {
   updated_at: string;
   user_id: string;
   pendingSync: boolean;
-} 
+}

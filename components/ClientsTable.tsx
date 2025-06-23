@@ -71,6 +71,41 @@ function formatDateBritish(dateValue: string | Date) {
   return `${day}/${month}/${year}`;
 }
 
+// Type guard to check if a value is a key of Client
+function isClientKey(key: unknown): key is keyof Client {
+  return (
+    typeof key === 'string' &&
+    [
+      'id',
+      'user_id',
+      'name',
+      'category',
+      'phone',
+      'email',
+      'neck',
+      'chest',
+      'bust',
+      'waist',
+      'hips',
+      'thigh',
+      'inseam',
+      'arm_length',
+      'outseam',
+      'ankle',
+      'shoulder',
+      'sleeve_length',
+      'knee',
+      'wrist',
+      'rise',
+      'bicep',
+      'notes',
+      'pendingSync',
+      'created_at',
+      'updated_at',
+    ].includes(key)
+  );
+}
+
 /**
  * ClientsTable fetches and displays real client data using tRPC.
  */
@@ -175,19 +210,23 @@ const ClientsTable: React.FC = () => {
     if (!filteredData) return [];
     if (!sortState.column) return filteredData;
     const sorted = [...filteredData].sort((a, b) => {
-      const aValue = a[sortState.column!];
-      const bValue = b[sortState.column!];
-      if (aValue === bValue) return 0;
-      if (aValue === null || aValue === undefined) return 1;
-      if (bValue === null || bValue === undefined) return -1;
-      if (typeof aValue === 'number' && typeof bValue === 'number') {
+      if (isClientKey(sortState.column)) {
+        const column = sortState.column;
+        const aValue = a[column];
+        const bValue = b[column];
+        if (aValue === bValue) return 0;
+        if (aValue === null || aValue === undefined) return 1;
+        if (bValue === null || bValue === undefined) return -1;
+        if (typeof aValue === 'number' && typeof bValue === 'number') {
+          return sortState.direction === 'asc'
+            ? aValue - bValue
+            : bValue - aValue;
+        }
         return sortState.direction === 'asc'
-          ? aValue - bValue
-          : bValue - aValue;
+          ? String(aValue).localeCompare(String(bValue))
+          : String(bValue).localeCompare(String(aValue));
       }
-      return sortState.direction === 'asc'
-        ? String(aValue).localeCompare(String(bValue))
-        : String(bValue).localeCompare(String(aValue));
+      return 0; // If not a valid column, don't sort
     });
     return sorted;
   }, [filteredData, sortState]);
@@ -340,14 +379,19 @@ const ClientsTable: React.FC = () => {
   ];
 
   // Handlers
-  const handleSort = (column: keyof Client | 'renderActions') => {
-    if (column === 'renderActions') return;
-    setSortState((prev) => {
-      if (prev.column === column) {
-        return { column, direction: prev.direction === 'asc' ? 'desc' : 'asc' };
-      }
-      return { column, direction: 'asc' };
-    });
+  const handleSort = (column: string) => {
+    // Only allow sorting on valid columns
+    if (isClientKey(column)) {
+      setSortState((prev) => {
+        if (prev.column === column) {
+          return {
+            column,
+            direction: prev.direction === 'asc' ? 'desc' : 'asc',
+          };
+        }
+        return { column, direction: 'asc' };
+      });
+    }
   };
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
