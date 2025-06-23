@@ -269,7 +269,10 @@ const DashboardContent: React.FC<{ userName: string }> = ({ userName }) => {
         {metricCards.map((card) => {
           const Icon = card.icon;
           return (
-            <div key={card.label} className="w-full sm:w-1/2 md:w-1/3 lg:w-1/4 xl:w-1/5">
+            <div
+              key={card.label}
+              className="w-full sm:w-1/2 md:w-1/3 lg:w-1/4 xl:w-1/5"
+            >
               <MetricCard
                 icon={<Icon className="h-8 w-8" />}
                 value={metricValues[card.valueKey]}
