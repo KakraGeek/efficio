@@ -257,7 +257,7 @@ const OrdersTable: React.FC = () => {
   }, [filteredData, sortState]);
 
   // Handle sorting
-  const handleSort = (column: OrderSortKey) => {
+  const handleSort = (column: string) => {
     if (column === 'renderActions') return;
     setSortState((prev) => ({
       column,
