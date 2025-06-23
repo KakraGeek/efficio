@@ -206,7 +206,7 @@ export const appRouter = t.router({
       const { id, ...updates } = input;
       const [payment] = await db
         .update(payments)
-        .set({ ...updates, updated_at: new Date() })
+        .set({ ...updates })
         .where(eq(payments.id, id))
         .returning();
       return payment;

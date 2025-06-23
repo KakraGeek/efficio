@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, ChangeEvent, FormEvent } from 'react';
 import toast from 'react-hot-toast';
 import Image from 'next/image';
 
@@ -7,7 +7,7 @@ export default function SettingsPage() {
   const [address, setAddress] = useState('');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
-  const [logoFile, setLogoFile] = useState(null);
+  const [logoFile, setLogoFile] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState('');
   const [logoUrl, setLogoUrl] = useState('');
   const [loading, setLoading] = useState(true);
@@ -60,7 +60,7 @@ export default function SettingsPage() {
     fetchSettings();
   }, []);
 
-  function handleLogoChange(e) {
+  function handleLogoChange(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (file) {
       if (!file.type.startsWith('image/')) {
@@ -139,7 +139,7 @@ export default function SettingsPage() {
     }
   }
 
-  function handleSubmit(e) {
+  function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setShowConfirm(true);
   }
