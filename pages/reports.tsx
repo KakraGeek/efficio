@@ -283,7 +283,9 @@ export default function ReportsPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {/* Clients */}
           <div className="bg-white rounded-lg shadow p-6 border border-gray-100">
-            <h2 className="text-xl font-semibold mb-2 text-gray-800">Clients Summary</h2>
+            <h2 className="text-xl font-semibold mb-2 text-gray-800">
+              Clients Summary
+            </h2>
             <select
               className="mb-4 border rounded px-2 py-1 text-sm"
               value={clientReport}
@@ -303,7 +305,9 @@ export default function ReportsPage() {
               <select
                 className="border rounded px-2 py-1 text-sm"
                 value={clientExportFormat}
-                onChange={(e) => setClientExportFormat(e.target.value as 'csv' | 'pdf')}
+                onChange={(e) =>
+                  setClientExportFormat(e.target.value as 'csv' | 'pdf')
+                }
                 disabled={!clientReport}
               >
                 <option value="csv">CSV</option>
@@ -318,7 +322,11 @@ export default function ReportsPage() {
                   }
                   clientExportFormat === 'csv'
                     ? exportCSV(clientData, clientColumns, 'clients-report.csv')
-                    : exportPDF(clientData, clientColumns, 'clients-report.csv');
+                    : exportPDF(
+                        clientData,
+                        clientColumns,
+                        'clients-report.csv'
+                      );
                 }}
                 className={
                   !clientReport
@@ -332,12 +340,16 @@ export default function ReportsPage() {
               </a>
             </div>
             {!clientReport && (
-              <div className="text-gray-500 text-sm italic">Select a report to view.</div>
+              <div className="text-gray-500 text-sm italic">
+                Select a report to view.
+              </div>
             )}
           </div>
           {/* Orders */}
           <div className="bg-white rounded-lg shadow p-6 border border-gray-100">
-            <h2 className="text-xl font-semibold mb-2 text-gray-800">Orders Report</h2>
+            <h2 className="text-xl font-semibold mb-2 text-gray-800">
+              Orders Report
+            </h2>
             <select
               className="mb-4 border rounded px-2 py-1 text-sm"
               value={orderReport}
@@ -357,7 +369,9 @@ export default function ReportsPage() {
               <select
                 className="border rounded px-2 py-1 text-sm"
                 value={orderExportFormat}
-                onChange={(e) => setOrderExportFormat(e.target.value as 'csv' | 'pdf')}
+                onChange={(e) =>
+                  setOrderExportFormat(e.target.value as 'csv' | 'pdf')
+                }
                 disabled={!orderReport}
               >
                 <option value="csv">CSV</option>
@@ -386,12 +400,16 @@ export default function ReportsPage() {
               </a>
             </div>
             {!orderReport && (
-              <div className="text-gray-500 text-sm italic">Select a report to view.</div>
+              <div className="text-gray-500 text-sm italic">
+                Select a report to view.
+              </div>
             )}
           </div>
           {/* Payments */}
           <div className="bg-white rounded-lg shadow p-6 border border-gray-100">
-            <h2 className="text-xl font-semibold mb-2 text-gray-800">Payments Report</h2>
+            <h2 className="text-xl font-semibold mb-2 text-gray-800">
+              Payments Report
+            </h2>
             <select
               className="mb-4 border rounded px-2 py-1 text-sm"
               value={paymentReport}
@@ -411,7 +429,9 @@ export default function ReportsPage() {
               <select
                 className="border rounded px-2 py-1 text-sm"
                 value={paymentExportFormat}
-                onChange={(e) => setPaymentExportFormat(e.target.value as 'csv' | 'pdf')}
+                onChange={(e) =>
+                  setPaymentExportFormat(e.target.value as 'csv' | 'pdf')
+                }
                 disabled={!paymentReport}
               >
                 <option value="csv">CSV</option>
@@ -425,8 +445,16 @@ export default function ReportsPage() {
                     return;
                   }
                   paymentExportFormat === 'csv'
-                    ? exportCSV(paymentData, paymentColumns, 'payments-report.csv')
-                    : exportPDF(paymentData, paymentColumns, 'payments-report.csv');
+                    ? exportCSV(
+                        paymentData,
+                        paymentColumns,
+                        'payments-report.csv'
+                      )
+                    : exportPDF(
+                        paymentData,
+                        paymentColumns,
+                        'payments-report.csv'
+                      );
                 }}
                 className={
                   !paymentReport
@@ -440,12 +468,16 @@ export default function ReportsPage() {
               </a>
             </div>
             {!paymentReport && (
-              <div className="text-gray-500 text-sm italic">Select a report to view.</div>
+              <div className="text-gray-500 text-sm italic">
+                Select a report to view.
+              </div>
             )}
           </div>
           {/* Inventory */}
           <div className="bg-white rounded-lg shadow p-6 border border-gray-100">
-            <h2 className="text-xl font-semibold mb-2 text-gray-800">Inventory Report</h2>
+            <h2 className="text-xl font-semibold mb-2 text-gray-800">
+              Inventory Report
+            </h2>
             <select
               className="mb-4 border rounded px-2 py-1 text-sm"
               value={inventoryReport}
@@ -465,7 +497,9 @@ export default function ReportsPage() {
               <select
                 className="border rounded px-2 py-1 text-sm"
                 value={inventoryExportFormat}
-                onChange={(e) => setInventoryExportFormat(e.target.value as 'csv' | 'pdf')}
+                onChange={(e) =>
+                  setInventoryExportFormat(e.target.value as 'csv' | 'pdf')
+                }
                 disabled={!inventoryReport}
               >
                 <option value="csv">CSV</option>
@@ -479,8 +513,16 @@ export default function ReportsPage() {
                     return;
                   }
                   inventoryExportFormat === 'csv'
-                    ? exportCSV(inventoryData, inventoryColumns, 'inventory-report.csv')
-                    : exportPDF(inventoryData, inventoryColumns, 'inventory-report.csv');
+                    ? exportCSV(
+                        inventoryData,
+                        inventoryColumns,
+                        'inventory-report.csv'
+                      )
+                    : exportPDF(
+                        inventoryData,
+                        inventoryColumns,
+                        'inventory-report.csv'
+                      );
                 }}
                 className={
                   !inventoryReport
@@ -494,7 +536,9 @@ export default function ReportsPage() {
               </a>
             </div>
             {!inventoryReport && (
-              <div className="text-gray-500 text-sm italic">Select a report to view.</div>
+              <div className="text-gray-500 text-sm italic">
+                Select a report to view.
+              </div>
             )}
           </div>
         </div>
