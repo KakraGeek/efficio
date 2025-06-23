@@ -95,7 +95,7 @@ function formatDateBritish(dateValue: string | Date) {
  */
 const OrdersTable: React.FC = () => {
   const { data: rawData, isLoading, error } = trpc.getOrders.useQuery();
-  
+
   // Ensure each order has the pendingSync property
   const data = useMemo(() => {
     if (!rawData) return [];
@@ -655,10 +655,7 @@ const OrdersTable: React.FC = () => {
         }
       >
         {orderToEdit ? (
-          <form
-            className="space-y-3"
-            onSubmit={handleEditSubmit}
-          >
+          <form className="space-y-3" onSubmit={handleEditSubmit}>
             <div>
               <label className="block font-semibold mb-1">Status</label>
               <select
@@ -755,10 +752,7 @@ const OrdersTable: React.FC = () => {
           </>
         }
       >
-        <form
-          className="space-y-3"
-          onSubmit={handleAddSubmit}
-        >
+        <form className="space-y-3" onSubmit={handleAddSubmit}>
           {/* Client Dropdown */}
           <div>
             <label className="block font-semibold mb-1">

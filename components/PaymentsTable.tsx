@@ -75,7 +75,7 @@ function formatDateBritish(dateValue: string | Date) {
  */
 const PaymentsTable: React.FC = () => {
   const { data: rawData, isLoading, error } = trpc.getPayments.useQuery();
-  
+
   // Ensure each payment has the pendingSync property and correct types
   const data = useMemo(() => {
     if (!rawData) return [];
@@ -178,7 +178,6 @@ const PaymentsTable: React.FC = () => {
       const term = search.trim().toLowerCase();
       filtered = filtered.filter((row) =>
         columns.some((col) => {
-          // Only filter on real Payment fields
           if (col.accessor === 'renderActions') return false;
           if (
             typeof col.accessor === 'string' &&
@@ -202,14 +201,14 @@ const PaymentsTable: React.FC = () => {
     const sorted = [...filteredData].sort((a, b) => {
       // Handle renderActions column separately
       if (sortState.column === 'renderActions') return 0;
-      
+
       const aValue = a[sortState.column as keyof Payment];
       const bValue = b[sortState.column as keyof Payment];
-      
+
       if (aValue === bValue) return 0;
       if (aValue === null || aValue === undefined) return 1;
       if (bValue === null || bValue === undefined) return -1;
-      
+
       if (typeof aValue === 'number' && typeof bValue === 'number') {
         return sortState.direction === 'asc'
           ? aValue - bValue
@@ -299,9 +298,7 @@ const PaymentsTable: React.FC = () => {
           ref={selectAllRef}
           checked={
             paginatedData.length > 0 &&
-            paginatedData.every((row) =>
-              selectedIds.includes(row.id)
-            )
+            paginatedData.every((row) => selectedIds.includes(row.id))
           }
           onChange={(e) => {
             if (e.target.checked) {

@@ -81,7 +81,7 @@ function formatDateBritish(dateValue: string | Date) {
  */
 const InventoryTable: React.FC = () => {
   const { data: rawData, isLoading, error } = trpc.getInventory.useQuery();
-  
+
   // Ensure each item has the pendingSync property
   const data = useMemo(() => {
     if (!rawData) return [];
