@@ -11,4 +11,4 @@ const pool = new Pool({
 });
 
 // Export the Drizzle database client
-export const db = drizzle(pool, { schema }); 
+export const db = drizzle(pool, { schema });

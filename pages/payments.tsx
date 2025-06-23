@@ -7,4 +7,4 @@ export default function PaymentsPage() {
       <PaymentsTable />
     </div>
   );
-} 
+}

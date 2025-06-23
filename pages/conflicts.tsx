@@ -1,12 +1,21 @@
 import React, { useEffect, useState } from 'react';
-import { getConflictedClients, getConflictedOrders, getConflictedInventory, getConflictedPayments, updateClient, updateOrder, updateInventoryItemById, updatePayment } from '../lib/indexedDb';
+import {
+  getConflictedClients,
+  getConflictedOrders,
+  getConflictedInventory,
+  getConflictedPayments,
+  updateClient,
+  updateOrder,
+  updateInventoryItemById,
+  updatePayment,
+} from '../lib/indexedDb';
 
 function ConflictTable({ title, conflicts, onResolve, fields }) {
   if (!conflicts.length) return null;
   return (
     <div className="mb-8">
       <h3 className="text-lg font-bold mb-2">{title}</h3>
-      {conflicts.map(conflict => (
+      {conflicts.map((conflict) => (
         <div key={conflict.id} className="mb-6 border-b pb-4">
           <div className="mb-2 font-semibold">ID: {conflict.id}</div>
           <table className="w-full text-sm mb-2">
@@ -18,7 +27,7 @@ function ConflictTable({ title, conflicts, onResolve, fields }) {
               </tr>
             </thead>
             <tbody>
-              {fields.map(field => (
+              {fields.map((field) => (
                 <tr key={field}>
                   <td>{field}</td>
                   <td>{String(conflict[field])}</td>
@@ -65,38 +74,68 @@ export default function ConflictsPage() {
       if (choice === 'local') {
         // Sync local to server, then mark as resolved
         // ...sync logic here...
-        await updateClient(conflict.id, { conflict: false, serverVersion: undefined });
+        await updateClient(conflict.id, {
+          conflict: false,
+          serverVersion: undefined,
+        });
       } else {
-        await updateClient(conflict.id, { ...conflict.serverVersion, conflict: false, serverVersion: undefined });
+        await updateClient(conflict.id, {
+          ...conflict.serverVersion,
+          conflict: false,
+          serverVersion: undefined,
+        });
       }
-      setClientConflicts(clientConflicts.filter(c => c.id !== conflict.id));
+      setClientConflicts(clientConflicts.filter((c) => c.id !== conflict.id));
     }
     if (type === 'order') {
       if (choice === 'local') {
         // ...sync logic here...
-        await updateOrder(conflict.id, { conflict: false, serverVersion: undefined });
+        await updateOrder(conflict.id, {
+          conflict: false,
+          serverVersion: undefined,
+        });
       } else {
-        await updateOrder(conflict.id, { ...conflict.serverVersion, conflict: false, serverVersion: undefined });
+        await updateOrder(conflict.id, {
+          ...conflict.serverVersion,
+          conflict: false,
+          serverVersion: undefined,
+        });
       }
-      setOrderConflicts(orderConflicts.filter(c => c.id !== conflict.id));
+      setOrderConflicts(orderConflicts.filter((c) => c.id !== conflict.id));
     }
     if (type === 'inventory') {
       if (choice === 'local') {
         // ...sync logic here...
-        await updateInventoryItemById(conflict.id, { conflict: false, serverVersion: undefined });
+        await updateInventoryItemById(conflict.id, {
+          conflict: false,
+          serverVersion: undefined,
+        });
       } else {
-        await updateInventoryItemById(conflict.id, { ...conflict.serverVersion, conflict: false, serverVersion: undefined });
+        await updateInventoryItemById(conflict.id, {
+          ...conflict.serverVersion,
+          conflict: false,
+          serverVersion: undefined,
+        });
       }
-      setInventoryConflicts(inventoryConflicts.filter(c => c.id !== conflict.id));
+      setInventoryConflicts(
+        inventoryConflicts.filter((c) => c.id !== conflict.id)
+      );
     }
     if (type === 'payment') {
       if (choice === 'local') {
         // ...sync logic here...
-        await updatePayment(conflict.id, { conflict: false, serverVersion: undefined });
+        await updatePayment(conflict.id, {
+          conflict: false,
+          serverVersion: undefined,
+        });
       } else {
-        await updatePayment(conflict.id, { ...conflict.serverVersion, conflict: false, serverVersion: undefined });
+        await updatePayment(conflict.id, {
+          ...conflict.serverVersion,
+          conflict: false,
+          serverVersion: undefined,
+        });
       }
-      setPaymentConflicts(paymentConflicts.filter(c => c.id !== conflict.id));
+      setPaymentConflicts(paymentConflicts.filter((c) => c.id !== conflict.id));
     }
   };
 
@@ -106,31 +145,51 @@ export default function ConflictsPage() {
       <ConflictTable
         title="Client Conflicts"
         conflicts={clientConflicts}
-        onResolve={(conflict, choice) => handleResolve('client', conflict, choice)}
+        onResolve={(conflict, choice) =>
+          handleResolve('client', conflict, choice)
+        }
         fields={['name', 'phone', 'email', 'notes']}
       />
       <ConflictTable
         title="Order Conflicts"
         conflicts={orderConflicts}
-        onResolve={(conflict, choice) => handleResolve('order', conflict, choice)}
+        onResolve={(conflict, choice) =>
+          handleResolve('order', conflict, choice)
+        }
         fields={['description', 'status', 'due_date', 'total_price']}
       />
       <ConflictTable
         title="Inventory Conflicts"
         conflicts={inventoryConflicts}
-        onResolve={(conflict, choice) => handleResolve('inventory', conflict, choice)}
+        onResolve={(conflict, choice) =>
+          handleResolve('inventory', conflict, choice)
+        }
         fields={['name', 'category', 'quantity', 'unit']}
       />
       <ConflictTable
         title="Payment Conflicts"
         conflicts={paymentConflicts}
-        onResolve={(conflict, choice) => handleResolve('payment', conflict, choice)}
-        fields={['amount', 'method', 'status', 'payment_type', 'payment_balance']}
+        onResolve={(conflict, choice) =>
+          handleResolve('payment', conflict, choice)
+        }
+        fields={[
+          'amount',
+          'method',
+          'status',
+          'payment_type',
+          'payment_balance',
+        ]}
       />
       {/* Add a message if no conflicts */}
-      {clientConflicts.length + orderConflicts.length + inventoryConflicts.length + paymentConflicts.length === 0 && (
-        <div className="text-green-700 font-semibold text-center py-8">No conflicts to resolve! 🎉</div>
+      {clientConflicts.length +
+        orderConflicts.length +
+        inventoryConflicts.length +
+        paymentConflicts.length ===
+        0 && (
+        <div className="text-green-700 font-semibold text-center py-8">
+          No conflicts to resolve! 🎉
+        </div>
       )}
     </div>
   );
-} 
+}

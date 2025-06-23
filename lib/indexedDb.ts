@@ -19,10 +19,16 @@ export async function getDB(): Promise<IDBPDatabase<EfficioDB>> {
         db.createObjectStore('orders', { keyPath: 'id', autoIncrement: true });
       }
       if (!db.objectStoreNames.contains('inventory')) {
-        db.createObjectStore('inventory', { keyPath: 'id', autoIncrement: true });
+        db.createObjectStore('inventory', {
+          keyPath: 'id',
+          autoIncrement: true,
+        });
       }
       if (!db.objectStoreNames.contains('payments')) {
-        db.createObjectStore('payments', { keyPath: 'id', autoIncrement: true });
+        db.createObjectStore('payments', {
+          keyPath: 'id',
+          autoIncrement: true,
+        });
       }
     },
   });
@@ -57,14 +63,14 @@ export async function updateClient(id: number, updates: any) {
 export async function getPendingClients() {
   const db = await getDB();
   const all = await db.getAll('clients');
-  return all.filter(c => c.pendingSync);
+  return all.filter((c) => c.pendingSync);
 }
 
 // Get all clients with conflict === true
 export async function getConflictedClients() {
   const db = await getDB();
   const all = await db.getAll('clients');
-  return all.filter(c => c.conflict);
+  return all.filter((c) => c.conflict);
 }
 
 // Add similar helpers for orders, inventory, and payments as needed
@@ -82,7 +88,7 @@ export async function getAllOrders() {
 export async function getConflictedOrders() {
   const db = await getDB();
   const all = await db.getAll('orders');
-  return all.filter(o => o.conflict);
+  return all.filter((o) => o.conflict);
 }
 
 export async function addInventoryItem(item: any) {
@@ -99,7 +105,7 @@ export async function getAllInventory() {
 export async function getConflictedInventory() {
   const db = await getDB();
   const all = await db.getAll('inventory');
-  return all.filter(i => i.conflict);
+  return all.filter((i) => i.conflict);
 }
 
 export async function addPayment(payment: any) {
@@ -116,14 +122,14 @@ export async function getAllPayments() {
 export async function getConflictedPayments() {
   const db = await getDB();
   const all = await db.getAll('payments');
-  return all.filter(p => p.conflict);
+  return all.filter((p) => p.conflict);
 }
 
 // Get all orders with pendingSync === true
 export async function getPendingOrders() {
   const db = await getDB();
   const all = await db.getAll('orders');
-  return all.filter(o => o.pendingSync);
+  return all.filter((o) => o.pendingSync);
 }
 
 // Update an order by id
@@ -139,7 +145,7 @@ export async function updateOrder(id: number, updates: any) {
 export async function getPendingInventory() {
   const db = await getDB();
   const all = await db.getAll('inventory');
-  return all.filter(i => i.pendingSync);
+  return all.filter((i) => i.pendingSync);
 }
 
 // Update an inventory item by id
@@ -155,7 +161,7 @@ export async function updateInventoryItemById(id: number, updates: any) {
 export async function getPendingPayments() {
   const db = await getDB();
   const all = await db.getAll('payments');
-  return all.filter(p => p.pendingSync);
+  return all.filter((p) => p.pendingSync);
 }
 
 // Update a payment by id
@@ -165,4 +171,4 @@ export async function updatePayment(id: number, updates: any) {
   if (payment) {
     await db.put('payments', { ...payment, ...updates });
   }
-} 
+}

@@ -10,4 +10,4 @@ export function RequireAuth({ children }: { children: React.ReactNode }) {
     return <div className="p-8 text-center">Redirecting...</div>;
   }
   return <>{children}</>;
-} 
+}

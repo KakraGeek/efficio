@@ -9,7 +9,12 @@ import Layout from '../components/Layout';
 import ErrorBoundary from '../components/ErrorBoundary';
 import { Toaster } from 'react-hot-toast';
 import { useOnlineStatus } from '../lib/useOnlineStatus';
-import { syncPendingClients, syncPendingOrders, syncPendingInventory, syncPendingPayments } from '../lib/syncPending';
+import {
+  syncPendingClients,
+  syncPendingOrders,
+  syncPendingInventory,
+  syncPendingPayments,
+} from '../lib/syncPending';
 import toast from 'react-hot-toast';
 
 function MyApp({ Component, pageProps }: AppProps) {
@@ -48,11 +53,13 @@ function MyApp({ Component, pageProps }: AppProps) {
         syncPendingOrders(),
         syncPendingInventory(),
         syncPendingPayments(),
-      ]).then(() => {
-        toast.success('All pending changes synced!');
-      }).catch(() => {
-        toast.error('Some changes could not be synced.');
-      });
+      ])
+        .then(() => {
+          toast.success('All pending changes synced!');
+        })
+        .catch(() => {
+          toast.error('Some changes could not be synced.');
+        });
     }
   }, [online]);
 
@@ -72,4 +79,4 @@ function MyApp({ Component, pageProps }: AppProps) {
   );
 }
 
-export default MyApp; 
+export default MyApp;

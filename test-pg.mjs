@@ -6,7 +6,7 @@ const { Pool } = pkg;
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false }
+  ssl: { rejectUnauthorized: false },
 });
 
 pool.query('SELECT NOW()', (err, res) => {
@@ -16,4 +16,4 @@ pool.query('SELECT NOW()', (err, res) => {
     console.log('Connection successful:', res.rows);
   }
   pool.end();
-}); 
+});

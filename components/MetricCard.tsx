@@ -8,7 +8,12 @@ interface MetricCardProps {
   iconColor?: string; // Tailwind color class, e.g. 'text-blue-500'
 }
 
-const MetricCard: React.FC<MetricCardProps> = ({ icon, value, label, iconColor = 'text-blue-500' }) => {
+const MetricCard: React.FC<MetricCardProps> = ({
+  icon,
+  value,
+  label,
+  iconColor = 'text-blue-500',
+}) => {
   return (
     <div className="bg-white rounded-lg shadow p-6 flex flex-col items-center hover:shadow-lg transition-shadow">
       <div className={`mb-2 text-3xl ${iconColor}`}>{icon}</div>
@@ -18,4 +23,4 @@ const MetricCard: React.FC<MetricCardProps> = ({ icon, value, label, iconColor =
   );
 };
 
-export default MetricCard; 
+export default MetricCard;

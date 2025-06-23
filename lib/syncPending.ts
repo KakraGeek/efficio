@@ -1,4 +1,13 @@
-import { getPendingClients, updateClient, getPendingOrders, updateOrder, getPendingInventory, updateInventoryItemById, getPendingPayments, updatePayment } from './indexedDb';
+import {
+  getPendingClients,
+  updateClient,
+  getPendingOrders,
+  updateOrder,
+  getPendingInventory,
+  updateInventoryItemById,
+  getPendingPayments,
+  updatePayment,
+} from './indexedDb';
 
 // Sync all clients with pendingSync === true
 export async function syncPendingClients() {
@@ -77,4 +86,4 @@ export async function syncPendingPayments() {
       console.error('Sync failed for payment', payment, err);
     }
   }
-} 
+}

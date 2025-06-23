@@ -21,7 +21,9 @@ export function useOnlineStatus() {
     const interval = setInterval(async () => {
       console.log('Heartbeat: checking /api/ping');
       try {
-        const response = await fetch(window.location.origin + '/api/ping', { cache: 'no-store' });
+        const response = await fetch(window.location.origin + '/api/ping', {
+          cache: 'no-store',
+        });
         setOnline(response.ok);
       } catch {
         setOnline(false);
@@ -38,4 +40,4 @@ export function useOnlineStatus() {
 
   // Return the current online status
   return online;
-} 
+}

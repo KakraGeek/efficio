@@ -17,7 +17,13 @@ interface ModalProps {
  * - children: modal content
  * - actions: optional footer actions (e.g., buttons)
  */
-const Modal: React.FC<ModalProps> = ({ open, onClose, title, children, actions }) => {
+const Modal: React.FC<ModalProps> = ({
+  open,
+  onClose,
+  title,
+  children,
+  actions,
+}) => {
   const overlayRef = useRef<HTMLDivElement>(null);
 
   // Close on Escape key
@@ -61,7 +67,9 @@ const Modal: React.FC<ModalProps> = ({ open, onClose, title, children, actions }
         </div>
         <div className="px-4 py-4">{children}</div>
         {actions && (
-          <div className="px-4 py-3 border-t flex justify-end gap-2">{actions}</div>
+          <div className="px-4 py-3 border-t flex justify-end gap-2">
+            {actions}
+          </div>
         )}
       </div>
     </div>,
@@ -69,4 +77,4 @@ const Modal: React.FC<ModalProps> = ({ open, onClose, title, children, actions }
   );
 };
 
-export default Modal; 
+export default Modal;

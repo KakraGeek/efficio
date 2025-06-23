@@ -1,9 +1,25 @@
-import Link from "next/link";
-import React, { useState, useEffect, useRef } from "react";
-import { HomeIcon, UsersIcon, ClipboardDocumentListIcon, ArchiveBoxIcon, BanknotesIcon, Bars3Icon, XMarkIcon, Cog6ToothIcon, QuestionMarkCircleIcon, ChartBarIcon } from '@heroicons/react/24/outline';
+import Link from 'next/link';
+import React, { useState, useEffect, useRef } from 'react';
+import {
+  HomeIcon,
+  UsersIcon,
+  ClipboardDocumentListIcon,
+  ArchiveBoxIcon,
+  BanknotesIcon,
+  Bars3Icon,
+  XMarkIcon,
+  Cog6ToothIcon,
+  QuestionMarkCircleIcon,
+  ChartBarIcon,
+} from '@heroicons/react/24/outline';
 import { useUser, useClerk } from '@clerk/nextjs';
 import { useOnlineStatus } from '../lib/useOnlineStatus';
-import { getConflictedClients, getConflictedOrders, getConflictedInventory, getConflictedPayments } from '../lib/indexedDb';
+import {
+  getConflictedClients,
+  getConflictedOrders,
+  getConflictedInventory,
+  getConflictedPayments,
+} from '../lib/indexedDb';
 
 /**
  * NavBar provides navigation links to all main table pages as a vertical sidebar.
@@ -31,7 +47,10 @@ const NavBar: React.FC = () => {
   useEffect(() => {
     if (!open) return;
     const handleClick = (e: MouseEvent) => {
-      if (sidebarRef.current && !sidebarRef.current.contains(e.target as Node)) {
+      if (
+        sidebarRef.current &&
+        !sidebarRef.current.contains(e.target as Node)
+      ) {
         setOpen(false);
       }
     };
@@ -95,28 +114,60 @@ const NavBar: React.FC = () => {
           </button>
         </div>
         <nav className="flex flex-col gap-2">
-          <Link href="/dashboard" className="flex items-center gap-3 px-3 py-2 rounded hover:bg-blue-50 text-blue-700 font-medium transition" onClick={() => setOpen(false)}>
+          <Link
+            href="/dashboard"
+            className="flex items-center gap-3 px-3 py-2 rounded hover:bg-blue-50 text-blue-700 font-medium transition"
+            onClick={() => setOpen(false)}
+          >
             <HomeIcon className="h-5 w-5" /> Dashboard
           </Link>
-          <Link href="/clients" className="flex items-center gap-3 px-3 py-2 rounded hover:bg-blue-50 text-blue-700 font-medium transition" onClick={() => setOpen(false)}>
+          <Link
+            href="/clients"
+            className="flex items-center gap-3 px-3 py-2 rounded hover:bg-blue-50 text-blue-700 font-medium transition"
+            onClick={() => setOpen(false)}
+          >
             <UsersIcon className="h-5 w-5" /> Clients
           </Link>
-          <Link href="/orders" className="flex items-center gap-3 px-3 py-2 rounded hover:bg-blue-50 text-blue-700 font-medium transition" onClick={() => setOpen(false)}>
+          <Link
+            href="/orders"
+            className="flex items-center gap-3 px-3 py-2 rounded hover:bg-blue-50 text-blue-700 font-medium transition"
+            onClick={() => setOpen(false)}
+          >
             <ClipboardDocumentListIcon className="h-5 w-5" /> Orders
           </Link>
-          <Link href="/inventory" className="flex items-center gap-3 px-3 py-2 rounded hover:bg-blue-50 text-blue-700 font-medium transition" onClick={() => setOpen(false)}>
+          <Link
+            href="/inventory"
+            className="flex items-center gap-3 px-3 py-2 rounded hover:bg-blue-50 text-blue-700 font-medium transition"
+            onClick={() => setOpen(false)}
+          >
             <ArchiveBoxIcon className="h-5 w-5" /> Inventory
           </Link>
-          <Link href="/payments" className="flex items-center gap-3 px-3 py-2 rounded hover:bg-blue-50 text-blue-700 font-medium transition" onClick={() => setOpen(false)}>
+          <Link
+            href="/payments"
+            className="flex items-center gap-3 px-3 py-2 rounded hover:bg-blue-50 text-blue-700 font-medium transition"
+            onClick={() => setOpen(false)}
+          >
             <BanknotesIcon className="h-5 w-5" /> Payments
           </Link>
-          <Link href="/reports" className="flex items-center gap-3 px-3 py-2 rounded hover:bg-blue-50 text-blue-700 font-medium transition" onClick={() => setOpen(false)}>
+          <Link
+            href="/reports"
+            className="flex items-center gap-3 px-3 py-2 rounded hover:bg-blue-50 text-blue-700 font-medium transition"
+            onClick={() => setOpen(false)}
+          >
             <ChartBarIcon className="h-5 w-5" /> Reports
           </Link>
-          <Link href="/settings" className="flex items-center gap-3 px-3 py-2 rounded hover:bg-blue-50 text-blue-700 font-medium transition" onClick={() => setOpen(false)}>
+          <Link
+            href="/settings"
+            className="flex items-center gap-3 px-3 py-2 rounded hover:bg-blue-50 text-blue-700 font-medium transition"
+            onClick={() => setOpen(false)}
+          >
             <Cog6ToothIcon className="h-5 w-5" /> Settings
           </Link>
-          <Link href="/support" className="flex items-center gap-3 px-3 py-2 rounded hover:bg-blue-50 text-blue-700 font-medium transition" onClick={() => setOpen(false)}>
+          <Link
+            href="/support"
+            className="flex items-center gap-3 px-3 py-2 rounded hover:bg-blue-50 text-blue-700 font-medium transition"
+            onClick={() => setOpen(false)}
+          >
             <QuestionMarkCircleIcon className="h-5 w-5" /> Help & Support
           </Link>
         </nav>
@@ -125,4 +176,4 @@ const NavBar: React.FC = () => {
   );
 };
 
-export default NavBar; 
+export default NavBar;

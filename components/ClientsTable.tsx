@@ -20,7 +20,7 @@ interface Client {
   inseam: number | null;
   arm_length: number | null;
   outseam: number | null; // Standard: outseam (full leg length)
-  ankle: number | null;   // Standard: ankle (bottom opening)
+  ankle: number | null; // Standard: ankle (bottom opening)
   shoulder: number | null;
   sleeve_length: number | null;
   knee: number | null;
@@ -41,20 +41,37 @@ type ClientRow = Client & { renderActions?: () => React.ReactNode };
 const columns: Column<Client>[] = [
   { accessor: 'id', header: 'Client ID' },
   { accessor: 'name', header: 'Name', render: (value) => value || '-' },
-  { accessor: 'phone', header: 'Phone Number', render: (value) => value || '-' },
+  {
+    accessor: 'phone',
+    header: 'Phone Number',
+    render: (value) => value || '-',
+  },
   { accessor: 'email', header: 'Email', render: (value) => value || '-' },
   {
     accessor: 'created_at',
     header: 'Created At',
-    render: (value) => value ? formatDateBritish(value) : '-',
+    render: (value) => (value ? formatDateBritish(value) : '-'),
   },
   {
     accessor: 'chest',
     header: 'Measurements',
     render: (_, row) => {
       // Count how many measurement fields are filled
-      const fields = ['neck','chest','bust','waist','hips','thigh','inseam','arm_length'];
-      const filled = fields.filter(f => row[f as keyof Client] !== undefined && row[f as keyof Client] !== null).length;
+      const fields = [
+        'neck',
+        'chest',
+        'bust',
+        'waist',
+        'hips',
+        'thigh',
+        'inseam',
+        'arm_length',
+      ];
+      const filled = fields.filter(
+        (f) =>
+          row[f as keyof Client] !== undefined &&
+          row[f as keyof Client] !== null
+      ).length;
       return `${filled} fields`;
     },
   },
@@ -98,10 +115,54 @@ const ClientsTable: React.FC = () => {
   // Edit modal state
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [clientToEdit, setClientToEdit] = useState<Client | null>(null);
-  const [editForm, setEditForm] = useState<Partial<Client>>({ name: '', phone: '', email: '', neck: null, chest: null, bust: null, waist: null, hips: null, thigh: null, inseam: null, arm_length: null, outseam: null, ankle: null, shoulder: null, sleeve_length: null, knee: null, wrist: null, rise: null, bicep: null, notes: '', pendingSync: false });
+  const [editForm, setEditForm] = useState<Partial<Client>>({
+    name: '',
+    phone: '',
+    email: '',
+    neck: null,
+    chest: null,
+    bust: null,
+    waist: null,
+    hips: null,
+    thigh: null,
+    inseam: null,
+    arm_length: null,
+    outseam: null,
+    ankle: null,
+    shoulder: null,
+    sleeve_length: null,
+    knee: null,
+    wrist: null,
+    rise: null,
+    bicep: null,
+    notes: '',
+    pendingSync: false,
+  });
   // Add new modal state
   const [addModalOpen, setAddModalOpen] = useState(false);
-  const [addForm, setAddForm] = useState<Partial<Client>>({ name: '', phone: '', email: '', neck: null, chest: null, bust: null, waist: null, hips: null, thigh: null, inseam: null, arm_length: null, outseam: null, ankle: null, shoulder: null, sleeve_length: null, knee: null, wrist: null, rise: null, bicep: null, notes: '', pendingSync: false });
+  const [addForm, setAddForm] = useState<Partial<Client>>({
+    name: '',
+    phone: '',
+    email: '',
+    neck: null,
+    chest: null,
+    bust: null,
+    waist: null,
+    hips: null,
+    thigh: null,
+    inseam: null,
+    arm_length: null,
+    outseam: null,
+    ankle: null,
+    shoulder: null,
+    sleeve_length: null,
+    knee: null,
+    wrist: null,
+    rise: null,
+    bicep: null,
+    notes: '',
+    pendingSync: false,
+  });
   // Delete modal state
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [clientToDelete, setClientToDelete] = useState<Client | null>(null);
@@ -116,11 +177,14 @@ const ClientsTable: React.FC = () => {
     if (!data) return [];
     if (!search.trim()) return data;
     const term = search.trim().toLowerCase();
-    return data.filter(row =>
-      columns.some(col => {
+    return data.filter((row) =>
+      columns.some((col) => {
         // Only filter on real Client fields
         if (col.accessor === 'renderActions') return false;
-        if (typeof col.accessor === 'string' && (col.accessor as keyof Client) in row) {
+        if (
+          typeof col.accessor === 'string' &&
+          (col.accessor as keyof Client) in row
+        ) {
           const value = row[col.accessor as keyof Client];
           if (value === null || value === undefined) return false;
           return String(value).toLowerCase().includes(term);
@@ -141,7 +205,9 @@ const ClientsTable: React.FC = () => {
       if (aValue === null || aValue === undefined) return 1;
       if (bValue === null || bValue === undefined) return -1;
       if (typeof aValue === 'number' && typeof bValue === 'number') {
-        return sortState.direction === 'asc' ? aValue - bValue : bValue - aValue;
+        return sortState.direction === 'asc'
+          ? aValue - bValue
+          : bValue - aValue;
       }
       return sortState.direction === 'asc'
         ? String(aValue).localeCompare(String(bValue))
@@ -159,7 +225,7 @@ const ClientsTable: React.FC = () => {
   }, [sortedData, currentPage, rowsPerPage]);
 
   // Only add renderActions after all filtering, sorting, and pagination
-  const paginatedDataWithActions: ClientRow[] = paginatedData.map(row => ({
+  const paginatedDataWithActions: ClientRow[] = paginatedData.map((row) => ({
     ...row,
     renderActions: () => (
       <>
@@ -204,14 +270,37 @@ const ClientsTable: React.FC = () => {
           type="checkbox"
           className="align-middle"
           aria-label="Select all"
-          checked={paginatedDataWithActions.length > 0 && paginatedDataWithActions.every(row => selectedIds.includes(row.id))}
+          checked={
+            paginatedDataWithActions.length > 0 &&
+            paginatedDataWithActions.every((row) =>
+              selectedIds.includes(row.id)
+            )
+          }
           // @ts-ignore: indeterminate is not a standard prop, but can be set via ref if needed
-          indeterminate={paginatedDataWithActions.some(row => selectedIds.includes(row.id)) && !paginatedDataWithActions.every(row => selectedIds.includes(row.id))}
-          onChange={e => {
+          indeterminate={
+            paginatedDataWithActions.some((row) =>
+              selectedIds.includes(row.id)
+            ) &&
+            !paginatedDataWithActions.every((row) =>
+              selectedIds.includes(row.id)
+            )
+          }
+          onChange={(e) => {
             if (e.target.checked) {
-              setSelectedIds(ids => Array.from(new Set([...ids, ...paginatedDataWithActions.map(row => row.id)])));
+              setSelectedIds((ids) =>
+                Array.from(
+                  new Set([
+                    ...ids,
+                    ...paginatedDataWithActions.map((row) => row.id),
+                  ])
+                )
+              );
             } else {
-              setSelectedIds(ids => ids.filter(id => !paginatedDataWithActions.some(row => row.id === id)));
+              setSelectedIds((ids) =>
+                ids.filter(
+                  (id) => !paginatedDataWithActions.some((row) => row.id === id)
+                )
+              );
             }
           }}
         />
@@ -220,11 +309,11 @@ const ClientsTable: React.FC = () => {
         <input
           type="checkbox"
           checked={selectedIds.includes(row.id)}
-          onChange={e => {
+          onChange={(e) => {
             if (e.target.checked) {
-              setSelectedIds(ids => [...ids, row.id]);
+              setSelectedIds((ids) => [...ids, row.id]);
             } else {
-              setSelectedIds(ids => ids.filter(id => id !== row.id));
+              setSelectedIds((ids) => ids.filter((id) => id !== row.id));
             }
           }}
           className="align-middle"
@@ -232,11 +321,13 @@ const ClientsTable: React.FC = () => {
         />
       ),
     },
-    ...columnsWithActions.filter(col => col.accessor !== 'renderActions'),
+    ...columnsWithActions.filter((col) => col.accessor !== 'renderActions'),
     // Add the renderActions column back with a valid accessor
     {
       accessor: 'renderActions',
-      header: columnsWithActions.find(col => col.accessor === 'renderActions')?.header ?? 'Actions',
+      header:
+        columnsWithActions.find((col) => col.accessor === 'renderActions')
+          ?.header ?? 'Actions',
       render: (_value, row) => (
         <>
           <button
@@ -305,14 +396,36 @@ const ClientsTable: React.FC = () => {
         type="text"
         placeholder="Search clients..."
         value={search}
-        onChange={e => setSearch(e.target.value)}
+        onChange={(e) => setSearch(e.target.value)}
         className="mb-4 w-full max-w-xs px-3 py-2 border rounded shadow-sm focus:outline-none focus:ring"
       />
       <div className="mb-4">
         <button
           className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
           onClick={() => {
-            setAddForm({ name: '', phone: '', email: '', neck: null, chest: null, bust: null, waist: null, hips: null, thigh: null, inseam: null, arm_length: null, outseam: null, ankle: null, shoulder: null, sleeve_length: null, knee: null, wrist: null, rise: null, bicep: null, notes: '', pendingSync: false });
+            setAddForm({
+              name: '',
+              phone: '',
+              email: '',
+              neck: null,
+              chest: null,
+              bust: null,
+              waist: null,
+              hips: null,
+              thigh: null,
+              inseam: null,
+              arm_length: null,
+              outseam: null,
+              ankle: null,
+              shoulder: null,
+              sleeve_length: null,
+              knee: null,
+              wrist: null,
+              rise: null,
+              bicep: null,
+              notes: '',
+              pendingSync: false,
+            });
             setAddModalOpen(true);
           }}
         >
@@ -326,7 +439,9 @@ const ClientsTable: React.FC = () => {
           Delete Selected
         </button>
         {selectedIds.length > 0 && (
-          <span className="text-sm text-gray-600 ml-2">{selectedIds.length} selected</span>
+          <span className="text-sm text-gray-600 ml-2">
+            {selectedIds.length} selected
+          </span>
         )}
       </div>
       <DataTable
@@ -345,7 +460,7 @@ const ClientsTable: React.FC = () => {
           >
             Previous
           </button>
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
             <button
               key={page}
               className={`px-3 py-1 border rounded mx-1 ${page === currentPage ? 'bg-blue-100 font-bold' : ''}`}
@@ -370,8 +485,10 @@ const ClientsTable: React.FC = () => {
             onChange={handleRowsPerPageChange}
             className="border rounded px-2 py-1"
           >
-            {[5, 10, 20, 50].map(n => (
-              <option key={n} value={n}>{n}</option>
+            {[5, 10, 20, 50].map((n) => (
+              <option key={n} value={n}>
+                {n}
+              </option>
             ))}
           </select>
         </div>
@@ -384,12 +501,18 @@ const ClientsTable: React.FC = () => {
       {/* View Details Modal */}
       <Modal
         open={viewModalOpen}
-        onClose={() => { setViewModalOpen(false); setClientToView(null); }}
+        onClose={() => {
+          setViewModalOpen(false);
+          setClientToView(null);
+        }}
         title="Client Details"
         actions={
           <button
             className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300"
-            onClick={() => { setViewModalOpen(false); setClientToView(null); }}
+            onClick={() => {
+              setViewModalOpen(false);
+              setClientToView(null);
+            }}
           >
             Close
           </button>
@@ -397,43 +520,163 @@ const ClientsTable: React.FC = () => {
       >
         {clientToView ? (
           <div className="space-y-2">
-            <div><span className="font-semibold">Name:</span> {clientToView.name} {clientToView.pendingSync && (
-              <span className="ml-2 px-2 py-0.5 bg-yellow-400 text-xs rounded">Pending Sync</span>
-            )}</div>
-            <div><span className="font-semibold">Phone:</span> {clientToView.phone || '—'}</div>
-            <div><span className="font-semibold">Email:</span> {clientToView.email || '—'}</div>
-            <div><span className="font-semibold">Neck:</span> {clientToView.neck ?? '—'}</div>
-            <div><span className="font-semibold">Chest:</span> {clientToView.chest ?? '—'}</div>
-            <div><span className="font-semibold">Bust:</span> {clientToView.bust ?? '—'}</div>
-            <div><span className="font-semibold">Waist:</span> {clientToView.waist ?? '—'}</div>
-            <div><span className="font-semibold">Hips:</span> {clientToView.hips ?? '—'}</div>
-            <div><span className="font-semibold">Thigh:</span> {clientToView.thigh ?? '—'}</div>
-            <div><span className="font-semibold">Inseam:</span> {clientToView.inseam ?? '—'}</div>
-            <div><span className="font-semibold">Outseam:</span> {clientToView.outseam ?? '—'}</div>
-            <div><span className="font-semibold">Arm Length:</span> {clientToView.arm_length ?? '—'}</div>
-            <div><span className="font-semibold">Shoulder:</span> {clientToView.shoulder ?? '—'}</div>
-            <div><span className="font-semibold">Sleeve Length:</span> {clientToView.sleeve_length ?? '—'}</div>
-            <div><span className="font-semibold">Knee:</span> {clientToView.knee ?? '—'}</div>
-            <div><span className="font-semibold">Wrist:</span> {clientToView.wrist ?? '—'}</div>
-            <div><span className="font-semibold">Rise:</span> {clientToView.rise ?? '—'}</div>
-            <div><span className="font-semibold">Bicep:</span> {clientToView.bicep ?? '—'}</div>
-            <div><span className="font-semibold">Ankle:</span> {clientToView.ankle ?? '—'}</div>
-            <div><span className="font-semibold">Notes:</span> {clientToView.notes || '—'}</div>
-            <div><span className="font-semibold">Created At:</span> {formatDateBritish(clientToView.created_at)}</div>
-            <div><span className="font-semibold">Last Updated:</span> {formatDateBritish(clientToView.updated_at)}</div>
+            <div>
+              <span className="font-semibold">Name:</span> {clientToView.name}{' '}
+              {clientToView.pendingSync && (
+                <span className="ml-2 px-2 py-0.5 bg-yellow-400 text-xs rounded">
+                  Pending Sync
+                </span>
+              )}
+            </div>
+            <div>
+              <span className="font-semibold">Phone:</span>{' '}
+              {clientToView.phone || '—'}
+            </div>
+            <div>
+              <span className="font-semibold">Email:</span>{' '}
+              {clientToView.email || '—'}
+            </div>
+            <div>
+              <span className="font-semibold">Neck:</span>{' '}
+              {clientToView.neck ?? '—'}
+            </div>
+            <div>
+              <span className="font-semibold">Chest:</span>{' '}
+              {clientToView.chest ?? '—'}
+            </div>
+            <div>
+              <span className="font-semibold">Bust:</span>{' '}
+              {clientToView.bust ?? '—'}
+            </div>
+            <div>
+              <span className="font-semibold">Waist:</span>{' '}
+              {clientToView.waist ?? '—'}
+            </div>
+            <div>
+              <span className="font-semibold">Hips:</span>{' '}
+              {clientToView.hips ?? '—'}
+            </div>
+            <div>
+              <span className="font-semibold">Thigh:</span>{' '}
+              {clientToView.thigh ?? '—'}
+            </div>
+            <div>
+              <span className="font-semibold">Inseam:</span>{' '}
+              {clientToView.inseam ?? '—'}
+            </div>
+            <div>
+              <span className="font-semibold">Outseam:</span>{' '}
+              {clientToView.outseam ?? '—'}
+            </div>
+            <div>
+              <span className="font-semibold">Arm Length:</span>{' '}
+              {clientToView.arm_length ?? '—'}
+            </div>
+            <div>
+              <span className="font-semibold">Shoulder:</span>{' '}
+              {clientToView.shoulder ?? '—'}
+            </div>
+            <div>
+              <span className="font-semibold">Sleeve Length:</span>{' '}
+              {clientToView.sleeve_length ?? '—'}
+            </div>
+            <div>
+              <span className="font-semibold">Knee:</span>{' '}
+              {clientToView.knee ?? '—'}
+            </div>
+            <div>
+              <span className="font-semibold">Wrist:</span>{' '}
+              {clientToView.wrist ?? '—'}
+            </div>
+            <div>
+              <span className="font-semibold">Rise:</span>{' '}
+              {clientToView.rise ?? '—'}
+            </div>
+            <div>
+              <span className="font-semibold">Bicep:</span>{' '}
+              {clientToView.bicep ?? '—'}
+            </div>
+            <div>
+              <span className="font-semibold">Ankle:</span>{' '}
+              {clientToView.ankle ?? '—'}
+            </div>
+            <div>
+              <span className="font-semibold">Notes:</span>{' '}
+              {clientToView.notes || '—'}
+            </div>
+            <div>
+              <span className="font-semibold">Created At:</span>{' '}
+              {formatDateBritish(clientToView.created_at)}
+            </div>
+            <div>
+              <span className="font-semibold">Last Updated:</span>{' '}
+              {formatDateBritish(clientToView.updated_at)}
+            </div>
           </div>
         ) : null}
       </Modal>
       {/* Edit Client Modal */}
       <Modal
         open={editModalOpen}
-        onClose={() => { setEditModalOpen(false); setClientToEdit(null); setEditForm({ name: '', phone: '', email: '', neck: null, chest: null, bust: null, waist: null, hips: null, thigh: null, inseam: null, arm_length: null, outseam: null, ankle: null, shoulder: null, sleeve_length: null, knee: null, wrist: null, rise: null, bicep: null, notes: '', pendingSync: false }); }}
+        onClose={() => {
+          setEditModalOpen(false);
+          setClientToEdit(null);
+          setEditForm({
+            name: '',
+            phone: '',
+            email: '',
+            neck: null,
+            chest: null,
+            bust: null,
+            waist: null,
+            hips: null,
+            thigh: null,
+            inseam: null,
+            arm_length: null,
+            outseam: null,
+            ankle: null,
+            shoulder: null,
+            sleeve_length: null,
+            knee: null,
+            wrist: null,
+            rise: null,
+            bicep: null,
+            notes: '',
+            pendingSync: false,
+          });
+        }}
         title="Edit Client"
         actions={
           <>
             <button
               className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300 mr-2"
-              onClick={() => { setEditModalOpen(false); setClientToEdit(null); setEditForm({ name: '', phone: '', email: '', neck: null, chest: null, bust: null, waist: null, hips: null, thigh: null, inseam: null, arm_length: null, outseam: null, ankle: null, shoulder: null, sleeve_length: null, knee: null, wrist: null, rise: null, bicep: null, notes: '', pendingSync: false }); }}
+              onClick={() => {
+                setEditModalOpen(false);
+                setClientToEdit(null);
+                setEditForm({
+                  name: '',
+                  phone: '',
+                  email: '',
+                  neck: null,
+                  chest: null,
+                  bust: null,
+                  waist: null,
+                  hips: null,
+                  thigh: null,
+                  inseam: null,
+                  arm_length: null,
+                  outseam: null,
+                  ankle: null,
+                  shoulder: null,
+                  sleeve_length: null,
+                  knee: null,
+                  wrist: null,
+                  rise: null,
+                  bicep: null,
+                  notes: '',
+                  pendingSync: false,
+                });
+              }}
             >
               Cancel
             </button>
@@ -443,7 +686,29 @@ const ClientsTable: React.FC = () => {
                 toast.success(`Client updated successfully!`);
                 setEditModalOpen(false);
                 setClientToEdit(null);
-                setEditForm({ name: '', phone: '', email: '', neck: null, chest: null, bust: null, waist: null, hips: null, thigh: null, inseam: null, arm_length: null, outseam: null, ankle: null, shoulder: null, sleeve_length: null, knee: null, wrist: null, rise: null, bicep: null, notes: '', pendingSync: false });
+                setEditForm({
+                  name: '',
+                  phone: '',
+                  email: '',
+                  neck: null,
+                  chest: null,
+                  bust: null,
+                  waist: null,
+                  hips: null,
+                  thigh: null,
+                  inseam: null,
+                  arm_length: null,
+                  outseam: null,
+                  ankle: null,
+                  shoulder: null,
+                  sleeve_length: null,
+                  knee: null,
+                  wrist: null,
+                  rise: null,
+                  bicep: null,
+                  notes: '',
+                  pendingSync: false,
+                });
               }}
             >
               Save
@@ -454,14 +719,18 @@ const ClientsTable: React.FC = () => {
         {clientToEdit ? (
           <form
             className="space-y-3"
-            onSubmit={e => { e.preventDefault(); }}
+            onSubmit={(e) => {
+              e.preventDefault();
+            }}
           >
             <div>
               <label className="block font-semibold mb-1">Name</label>
               <input
                 className="w-full border rounded px-2 py-1"
                 value={editForm.name ?? ''}
-                onChange={e => setEditForm(f => ({ ...f, name: e.target.value }))}
+                onChange={(e) =>
+                  setEditForm((f) => ({ ...f, name: e.target.value }))
+                }
               />
             </div>
             <div>
@@ -469,7 +738,9 @@ const ClientsTable: React.FC = () => {
               <input
                 className="w-full border rounded px-2 py-1"
                 value={editForm.phone ?? ''}
-                onChange={e => setEditForm(f => ({ ...f, phone: e.target.value }))}
+                onChange={(e) =>
+                  setEditForm((f) => ({ ...f, phone: e.target.value }))
+                }
               />
             </div>
             <div>
@@ -477,34 +748,130 @@ const ClientsTable: React.FC = () => {
               <input
                 className="w-full border rounded px-2 py-1"
                 value={editForm.email ?? ''}
-                onChange={e => setEditForm(f => ({ ...f, email: e.target.value }))}
+                onChange={(e) =>
+                  setEditForm((f) => ({ ...f, email: e.target.value }))
+                }
               />
             </div>
             {/* Measurement fields for edit */}
             <div className="grid grid-cols-2 gap-2">
               <div>
                 <label className="block text-xs font-medium">Shoulder</label>
-                <input type="number" className="w-full border rounded px-2 py-1" value={editForm.shoulder !== null && editForm.shoulder !== undefined ? editForm.shoulder : ''} onChange={e => setEditForm(f => ({ ...f, shoulder: e.target.value === '' ? null : Number(e.target.value) }))} />
+                <input
+                  type="number"
+                  className="w-full border rounded px-2 py-1"
+                  value={
+                    editForm.shoulder !== null &&
+                    editForm.shoulder !== undefined
+                      ? editForm.shoulder
+                      : ''
+                  }
+                  onChange={(e) =>
+                    setEditForm((f) => ({
+                      ...f,
+                      shoulder:
+                        e.target.value === '' ? null : Number(e.target.value),
+                    }))
+                  }
+                />
               </div>
               <div>
-                <label className="block text-xs font-medium">Sleeve Length</label>
-                <input type="number" className="w-full border rounded px-2 py-1" value={editForm.sleeve_length !== null && editForm.sleeve_length !== undefined ? editForm.sleeve_length : ''} onChange={e => setEditForm(f => ({ ...f, sleeve_length: e.target.value === '' ? null : Number(e.target.value) }))} />
+                <label className="block text-xs font-medium">
+                  Sleeve Length
+                </label>
+                <input
+                  type="number"
+                  className="w-full border rounded px-2 py-1"
+                  value={
+                    editForm.sleeve_length !== null &&
+                    editForm.sleeve_length !== undefined
+                      ? editForm.sleeve_length
+                      : ''
+                  }
+                  onChange={(e) =>
+                    setEditForm((f) => ({
+                      ...f,
+                      sleeve_length:
+                        e.target.value === '' ? null : Number(e.target.value),
+                    }))
+                  }
+                />
               </div>
               <div>
                 <label className="block text-xs font-medium">Knee</label>
-                <input type="number" className="w-full border rounded px-2 py-1" value={editForm.knee !== null && editForm.knee !== undefined ? editForm.knee : ''} onChange={e => setEditForm(f => ({ ...f, knee: e.target.value === '' ? null : Number(e.target.value) }))} />
+                <input
+                  type="number"
+                  className="w-full border rounded px-2 py-1"
+                  value={
+                    editForm.knee !== null && editForm.knee !== undefined
+                      ? editForm.knee
+                      : ''
+                  }
+                  onChange={(e) =>
+                    setEditForm((f) => ({
+                      ...f,
+                      knee:
+                        e.target.value === '' ? null : Number(e.target.value),
+                    }))
+                  }
+                />
               </div>
               <div>
                 <label className="block text-xs font-medium">Wrist</label>
-                <input type="number" className="w-full border rounded px-2 py-1" value={editForm.wrist !== null && editForm.wrist !== undefined ? editForm.wrist : ''} onChange={e => setEditForm(f => ({ ...f, wrist: e.target.value === '' ? null : Number(e.target.value) }))} />
+                <input
+                  type="number"
+                  className="w-full border rounded px-2 py-1"
+                  value={
+                    editForm.wrist !== null && editForm.wrist !== undefined
+                      ? editForm.wrist
+                      : ''
+                  }
+                  onChange={(e) =>
+                    setEditForm((f) => ({
+                      ...f,
+                      wrist:
+                        e.target.value === '' ? null : Number(e.target.value),
+                    }))
+                  }
+                />
               </div>
               <div>
                 <label className="block text-xs font-medium">Rise</label>
-                <input type="number" className="w-full border rounded px-2 py-1" value={editForm.rise !== null && editForm.rise !== undefined ? editForm.rise : ''} onChange={e => setEditForm(f => ({ ...f, rise: e.target.value === '' ? null : Number(e.target.value) }))} />
+                <input
+                  type="number"
+                  className="w-full border rounded px-2 py-1"
+                  value={
+                    editForm.rise !== null && editForm.rise !== undefined
+                      ? editForm.rise
+                      : ''
+                  }
+                  onChange={(e) =>
+                    setEditForm((f) => ({
+                      ...f,
+                      rise:
+                        e.target.value === '' ? null : Number(e.target.value),
+                    }))
+                  }
+                />
               </div>
               <div>
                 <label className="block text-xs font-medium">Bicep</label>
-                <input type="number" className="w-full border rounded px-2 py-1" value={editForm.bicep !== null && editForm.bicep !== undefined ? editForm.bicep : ''} onChange={e => setEditForm(f => ({ ...f, bicep: e.target.value === '' ? null : Number(e.target.value) }))} />
+                <input
+                  type="number"
+                  className="w-full border rounded px-2 py-1"
+                  value={
+                    editForm.bicep !== null && editForm.bicep !== undefined
+                      ? editForm.bicep
+                      : ''
+                  }
+                  onChange={(e) =>
+                    setEditForm((f) => ({
+                      ...f,
+                      bicep:
+                        e.target.value === '' ? null : Number(e.target.value),
+                    }))
+                  }
+                />
               </div>
             </div>
             {/* Notes field */}
@@ -513,7 +880,9 @@ const ClientsTable: React.FC = () => {
               <textarea
                 className="w-full border rounded px-2 py-1"
                 value={editForm.notes ?? ''}
-                onChange={e => setEditForm(f => ({ ...f, notes: e.target.value }))}
+                onChange={(e) =>
+                  setEditForm((f) => ({ ...f, notes: e.target.value }))
+                }
                 rows={2}
               />
             </div>
@@ -523,13 +892,19 @@ const ClientsTable: React.FC = () => {
       {/* Delete Confirmation Modal */}
       <Modal
         open={deleteModalOpen}
-        onClose={() => { setDeleteModalOpen(false); setClientToDelete(null); }}
+        onClose={() => {
+          setDeleteModalOpen(false);
+          setClientToDelete(null);
+        }}
         title="Confirm Delete"
         actions={
           <>
             <button
               className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300 mr-2"
-              onClick={() => { setDeleteModalOpen(false); setClientToDelete(null); }}
+              onClick={() => {
+                setDeleteModalOpen(false);
+                setClientToDelete(null);
+              }}
             >
               Cancel
             </button>
@@ -547,7 +922,10 @@ const ClientsTable: React.FC = () => {
         }
       >
         {clientToDelete ? (
-          <p>Are you sure you want to delete <span className="font-semibold">{clientToDelete.name}</span>?</p>
+          <p>
+            Are you sure you want to delete{' '}
+            <span className="font-semibold">{clientToDelete.name}</span>?
+          </p>
         ) : null}
       </Modal>
       {/* Bulk Delete Modal */}
@@ -566,7 +944,9 @@ const ClientsTable: React.FC = () => {
             <button
               className="px-4 py-2 rounded bg-red-600 text-white hover:bg-red-700"
               onClick={() => {
-                toast.success(`${selectedIds.length} client(s) deleted successfully!`);
+                toast.success(
+                  `${selectedIds.length} client(s) deleted successfully!`
+                );
                 setBulkDeleteModalOpen(false);
                 setSelectedIds([]);
               }}
@@ -577,19 +957,71 @@ const ClientsTable: React.FC = () => {
         }
       >
         <div className="py-4 text-center">
-          Are you sure you want to delete <span className="font-semibold">{selectedIds.length}</span> selected client(s)?
+          Are you sure you want to delete{' '}
+          <span className="font-semibold">{selectedIds.length}</span> selected
+          client(s)?
         </div>
       </Modal>
       {/* Add Client Modal */}
       <Modal
         open={addModalOpen}
-        onClose={() => { setAddModalOpen(false); setAddForm({ name: '', phone: '', email: '', neck: null, chest: null, bust: null, waist: null, hips: null, thigh: null, inseam: null, arm_length: null, outseam: null, ankle: null, shoulder: null, sleeve_length: null, knee: null, wrist: null, rise: null, bicep: null, notes: '', pendingSync: false }); }}
+        onClose={() => {
+          setAddModalOpen(false);
+          setAddForm({
+            name: '',
+            phone: '',
+            email: '',
+            neck: null,
+            chest: null,
+            bust: null,
+            waist: null,
+            hips: null,
+            thigh: null,
+            inseam: null,
+            arm_length: null,
+            outseam: null,
+            ankle: null,
+            shoulder: null,
+            sleeve_length: null,
+            knee: null,
+            wrist: null,
+            rise: null,
+            bicep: null,
+            notes: '',
+            pendingSync: false,
+          });
+        }}
         title="Add New Client"
         actions={
           <>
             <button
               className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300 mr-2"
-              onClick={() => { setAddModalOpen(false); setAddForm({ name: '', phone: '', email: '', neck: null, chest: null, bust: null, waist: null, hips: null, thigh: null, inseam: null, arm_length: null, outseam: null, ankle: null, shoulder: null, sleeve_length: null, knee: null, wrist: null, rise: null, bicep: null, notes: '', pendingSync: false }); }}
+              onClick={() => {
+                setAddModalOpen(false);
+                setAddForm({
+                  name: '',
+                  phone: '',
+                  email: '',
+                  neck: null,
+                  chest: null,
+                  bust: null,
+                  waist: null,
+                  hips: null,
+                  thigh: null,
+                  inseam: null,
+                  arm_length: null,
+                  outseam: null,
+                  ankle: null,
+                  shoulder: null,
+                  sleeve_length: null,
+                  knee: null,
+                  wrist: null,
+                  rise: null,
+                  bicep: null,
+                  notes: '',
+                  pendingSync: false,
+                });
+              }}
             >
               Cancel
             </button>
@@ -607,10 +1039,34 @@ const ClientsTable: React.FC = () => {
                 } else {
                   // Save to IndexedDB with pendingSync
                   // TODO: Actually call addClient from indexedDb.ts here
-                  toast('Client saved locally. Will sync when back online.', { icon: '📦' });
+                  toast('Client saved locally. Will sync when back online.', {
+                    icon: '📦',
+                  });
                 }
                 setAddModalOpen(false);
-                setAddForm({ name: '', phone: '', email: '', neck: null, chest: null, bust: null, waist: null, hips: null, thigh: null, inseam: null, arm_length: null, outseam: null, ankle: null, shoulder: null, sleeve_length: null, knee: null, wrist: null, rise: null, bicep: null, notes: '', pendingSync: false });
+                setAddForm({
+                  name: '',
+                  phone: '',
+                  email: '',
+                  neck: null,
+                  chest: null,
+                  bust: null,
+                  waist: null,
+                  hips: null,
+                  thigh: null,
+                  inseam: null,
+                  arm_length: null,
+                  outseam: null,
+                  ankle: null,
+                  shoulder: null,
+                  sleeve_length: null,
+                  knee: null,
+                  wrist: null,
+                  rise: null,
+                  bicep: null,
+                  notes: '',
+                  pendingSync: false,
+                });
               }}
             >
               Add
@@ -620,14 +1076,20 @@ const ClientsTable: React.FC = () => {
       >
         <form
           className="space-y-3"
-          onSubmit={e => { e.preventDefault(); }}
+          onSubmit={(e) => {
+            e.preventDefault();
+          }}
         >
           <div>
-            <label className="block font-semibold mb-1">Name <span className="text-red-500">*</span></label>
+            <label className="block font-semibold mb-1">
+              Name <span className="text-red-500">*</span>
+            </label>
             <input
               className="w-full border rounded px-2 py-1"
               value={addForm.name ?? ''}
-              onChange={e => setAddForm(f => ({ ...f, name: e.target.value }))}
+              onChange={(e) =>
+                setAddForm((f) => ({ ...f, name: e.target.value }))
+              }
               required
             />
           </div>
@@ -636,7 +1098,9 @@ const ClientsTable: React.FC = () => {
             <input
               className="w-full border rounded px-2 py-1"
               value={addForm.phone ?? ''}
-              onChange={e => setAddForm(f => ({ ...f, phone: e.target.value }))}
+              onChange={(e) =>
+                setAddForm((f) => ({ ...f, phone: e.target.value }))
+              }
             />
           </div>
           <div>
@@ -644,74 +1108,313 @@ const ClientsTable: React.FC = () => {
             <input
               className="w-full border rounded px-2 py-1"
               value={addForm.email ?? ''}
-              onChange={e => setAddForm(f => ({ ...f, email: e.target.value }))}
+              onChange={(e) =>
+                setAddForm((f) => ({ ...f, email: e.target.value }))
+              }
             />
           </div>
           {/* Measurement fields */}
           <div className="grid grid-cols-2 gap-2">
             <div>
               <label className="block text-xs font-medium">Neck</label>
-              <input type="number" className="w-full border rounded px-2 py-1" value={addForm.neck !== null && addForm.neck !== undefined ? addForm.neck : ''} onChange={e => setAddForm(f => ({ ...f, neck: e.target.value === '' ? null : Number(e.target.value) }))} />
+              <input
+                type="number"
+                className="w-full border rounded px-2 py-1"
+                value={
+                  addForm.neck !== null && addForm.neck !== undefined
+                    ? addForm.neck
+                    : ''
+                }
+                onChange={(e) =>
+                  setAddForm((f) => ({
+                    ...f,
+                    neck: e.target.value === '' ? null : Number(e.target.value),
+                  }))
+                }
+              />
             </div>
             <div>
               <label className="block text-xs font-medium">Chest</label>
-              <input type="number" className="w-full border rounded px-2 py-1" value={addForm.chest !== null && addForm.chest !== undefined ? addForm.chest : ''} onChange={e => setAddForm(f => ({ ...f, chest: e.target.value === '' ? null : Number(e.target.value) }))} />
+              <input
+                type="number"
+                className="w-full border rounded px-2 py-1"
+                value={
+                  addForm.chest !== null && addForm.chest !== undefined
+                    ? addForm.chest
+                    : ''
+                }
+                onChange={(e) =>
+                  setAddForm((f) => ({
+                    ...f,
+                    chest:
+                      e.target.value === '' ? null : Number(e.target.value),
+                  }))
+                }
+              />
             </div>
             <div>
               <label className="block text-xs font-medium">Bust</label>
-              <input type="number" className="w-full border rounded px-2 py-1" value={addForm.bust !== null && addForm.bust !== undefined ? addForm.bust : ''} onChange={e => setAddForm(f => ({ ...f, bust: e.target.value === '' ? null : Number(e.target.value) }))} />
+              <input
+                type="number"
+                className="w-full border rounded px-2 py-1"
+                value={
+                  addForm.bust !== null && addForm.bust !== undefined
+                    ? addForm.bust
+                    : ''
+                }
+                onChange={(e) =>
+                  setAddForm((f) => ({
+                    ...f,
+                    bust: e.target.value === '' ? null : Number(e.target.value),
+                  }))
+                }
+              />
             </div>
             <div>
               <label className="block text-xs font-medium">Waist</label>
-              <input type="number" className="w-full border rounded px-2 py-1" value={addForm.waist !== null && addForm.waist !== undefined ? addForm.waist : ''} onChange={e => setAddForm(f => ({ ...f, waist: e.target.value === '' ? null : Number(e.target.value) }))} />
+              <input
+                type="number"
+                className="w-full border rounded px-2 py-1"
+                value={
+                  addForm.waist !== null && addForm.waist !== undefined
+                    ? addForm.waist
+                    : ''
+                }
+                onChange={(e) =>
+                  setAddForm((f) => ({
+                    ...f,
+                    waist:
+                      e.target.value === '' ? null : Number(e.target.value),
+                  }))
+                }
+              />
             </div>
             <div>
               <label className="block text-xs font-medium">Hips</label>
-              <input type="number" className="w-full border rounded px-2 py-1" value={addForm.hips !== null && addForm.hips !== undefined ? addForm.hips : ''} onChange={e => setAddForm(f => ({ ...f, hips: e.target.value === '' ? null : Number(e.target.value) }))} />
+              <input
+                type="number"
+                className="w-full border rounded px-2 py-1"
+                value={
+                  addForm.hips !== null && addForm.hips !== undefined
+                    ? addForm.hips
+                    : ''
+                }
+                onChange={(e) =>
+                  setAddForm((f) => ({
+                    ...f,
+                    hips: e.target.value === '' ? null : Number(e.target.value),
+                  }))
+                }
+              />
             </div>
             <div>
               <label className="block text-xs font-medium">Thigh</label>
-              <input type="number" className="w-full border rounded px-2 py-1" value={addForm.thigh !== null && addForm.thigh !== undefined ? addForm.thigh : ''} onChange={e => setAddForm(f => ({ ...f, thigh: e.target.value === '' ? null : Number(e.target.value) }))} />
+              <input
+                type="number"
+                className="w-full border rounded px-2 py-1"
+                value={
+                  addForm.thigh !== null && addForm.thigh !== undefined
+                    ? addForm.thigh
+                    : ''
+                }
+                onChange={(e) =>
+                  setAddForm((f) => ({
+                    ...f,
+                    thigh:
+                      e.target.value === '' ? null : Number(e.target.value),
+                  }))
+                }
+              />
             </div>
             <div>
               <label className="block text-xs font-medium">Inseam</label>
-              <input type="number" className="w-full border rounded px-2 py-1" value={addForm.inseam !== null && addForm.inseam !== undefined ? addForm.inseam : ''} onChange={e => setAddForm(f => ({ ...f, inseam: e.target.value === '' ? null : Number(e.target.value) }))} />
+              <input
+                type="number"
+                className="w-full border rounded px-2 py-1"
+                value={
+                  addForm.inseam !== null && addForm.inseam !== undefined
+                    ? addForm.inseam
+                    : ''
+                }
+                onChange={(e) =>
+                  setAddForm((f) => ({
+                    ...f,
+                    inseam:
+                      e.target.value === '' ? null : Number(e.target.value),
+                  }))
+                }
+              />
             </div>
             <div>
               <label className="block text-xs font-medium">Arm Length</label>
-              <input type="number" className="w-full border rounded px-2 py-1" value={addForm.arm_length !== null && addForm.arm_length !== undefined ? addForm.arm_length : ''} onChange={e => setAddForm(f => ({ ...f, arm_length: e.target.value === '' ? null : Number(e.target.value) }))} />
+              <input
+                type="number"
+                className="w-full border rounded px-2 py-1"
+                value={
+                  addForm.arm_length !== null &&
+                  addForm.arm_length !== undefined
+                    ? addForm.arm_length
+                    : ''
+                }
+                onChange={(e) =>
+                  setAddForm((f) => ({
+                    ...f,
+                    arm_length:
+                      e.target.value === '' ? null : Number(e.target.value),
+                  }))
+                }
+              />
             </div>
             <div>
               <label className="block text-xs font-medium">Outseam</label>
-              <input type="number" className="w-full border rounded px-2 py-1" value={addForm.outseam !== null && addForm.outseam !== undefined ? addForm.outseam : ''} onChange={e => setAddForm(f => ({ ...f, outseam: e.target.value === '' ? null : Number(e.target.value) }))} />
+              <input
+                type="number"
+                className="w-full border rounded px-2 py-1"
+                value={
+                  addForm.outseam !== null && addForm.outseam !== undefined
+                    ? addForm.outseam
+                    : ''
+                }
+                onChange={(e) =>
+                  setAddForm((f) => ({
+                    ...f,
+                    outseam:
+                      e.target.value === '' ? null : Number(e.target.value),
+                  }))
+                }
+              />
             </div>
             <div>
               <label className="block text-xs font-medium">Ankle</label>
-              <input type="number" className="w-full border rounded px-2 py-1" value={addForm.ankle !== null && addForm.ankle !== undefined ? addForm.ankle : ''} onChange={e => setAddForm(f => ({ ...f, ankle: e.target.value === '' ? null : Number(e.target.value) }))} />
+              <input
+                type="number"
+                className="w-full border rounded px-2 py-1"
+                value={
+                  addForm.ankle !== null && addForm.ankle !== undefined
+                    ? addForm.ankle
+                    : ''
+                }
+                onChange={(e) =>
+                  setAddForm((f) => ({
+                    ...f,
+                    ankle:
+                      e.target.value === '' ? null : Number(e.target.value),
+                  }))
+                }
+              />
             </div>
             <div>
               <label className="block text-xs font-medium">Shoulder</label>
-              <input type="number" className="w-full border rounded px-2 py-1" value={addForm.shoulder !== null && addForm.shoulder !== undefined ? addForm.shoulder : ''} onChange={e => setAddForm(f => ({ ...f, shoulder: e.target.value === '' ? null : Number(e.target.value) }))} />
+              <input
+                type="number"
+                className="w-full border rounded px-2 py-1"
+                value={
+                  addForm.shoulder !== null && addForm.shoulder !== undefined
+                    ? addForm.shoulder
+                    : ''
+                }
+                onChange={(e) =>
+                  setAddForm((f) => ({
+                    ...f,
+                    shoulder:
+                      e.target.value === '' ? null : Number(e.target.value),
+                  }))
+                }
+              />
             </div>
             <div>
               <label className="block text-xs font-medium">Sleeve Length</label>
-              <input type="number" className="w-full border rounded px-2 py-1" value={addForm.sleeve_length !== null && addForm.sleeve_length !== undefined ? addForm.sleeve_length : ''} onChange={e => setAddForm(f => ({ ...f, sleeve_length: e.target.value === '' ? null : Number(e.target.value) }))} />
+              <input
+                type="number"
+                className="w-full border rounded px-2 py-1"
+                value={
+                  addForm.sleeve_length !== null &&
+                  addForm.sleeve_length !== undefined
+                    ? addForm.sleeve_length
+                    : ''
+                }
+                onChange={(e) =>
+                  setAddForm((f) => ({
+                    ...f,
+                    sleeve_length:
+                      e.target.value === '' ? null : Number(e.target.value),
+                  }))
+                }
+              />
             </div>
             <div>
               <label className="block text-xs font-medium">Knee</label>
-              <input type="number" className="w-full border rounded px-2 py-1" value={addForm.knee !== null && addForm.knee !== undefined ? addForm.knee : ''} onChange={e => setAddForm(f => ({ ...f, knee: e.target.value === '' ? null : Number(e.target.value) }))} />
+              <input
+                type="number"
+                className="w-full border rounded px-2 py-1"
+                value={
+                  addForm.knee !== null && addForm.knee !== undefined
+                    ? addForm.knee
+                    : ''
+                }
+                onChange={(e) =>
+                  setAddForm((f) => ({
+                    ...f,
+                    knee: e.target.value === '' ? null : Number(e.target.value),
+                  }))
+                }
+              />
             </div>
             <div>
               <label className="block text-xs font-medium">Wrist</label>
-              <input type="number" className="w-full border rounded px-2 py-1" value={addForm.wrist !== null && addForm.wrist !== undefined ? addForm.wrist : ''} onChange={e => setAddForm(f => ({ ...f, wrist: e.target.value === '' ? null : Number(e.target.value) }))} />
+              <input
+                type="number"
+                className="w-full border rounded px-2 py-1"
+                value={
+                  addForm.wrist !== null && addForm.wrist !== undefined
+                    ? addForm.wrist
+                    : ''
+                }
+                onChange={(e) =>
+                  setAddForm((f) => ({
+                    ...f,
+                    wrist:
+                      e.target.value === '' ? null : Number(e.target.value),
+                  }))
+                }
+              />
             </div>
             <div>
               <label className="block text-xs font-medium">Rise</label>
-              <input type="number" className="w-full border rounded px-2 py-1" value={addForm.rise !== null && addForm.rise !== undefined ? addForm.rise : ''} onChange={e => setAddForm(f => ({ ...f, rise: e.target.value === '' ? null : Number(e.target.value) }))} />
+              <input
+                type="number"
+                className="w-full border rounded px-2 py-1"
+                value={
+                  addForm.rise !== null && addForm.rise !== undefined
+                    ? addForm.rise
+                    : ''
+                }
+                onChange={(e) =>
+                  setAddForm((f) => ({
+                    ...f,
+                    rise: e.target.value === '' ? null : Number(e.target.value),
+                  }))
+                }
+              />
             </div>
             <div>
               <label className="block text-xs font-medium">Bicep</label>
-              <input type="number" className="w-full border rounded px-2 py-1" value={addForm.bicep !== null && addForm.bicep !== undefined ? addForm.bicep : ''} onChange={e => setAddForm(f => ({ ...f, bicep: e.target.value === '' ? null : Number(e.target.value) }))} />
+              <input
+                type="number"
+                className="w-full border rounded px-2 py-1"
+                value={
+                  addForm.bicep !== null && addForm.bicep !== undefined
+                    ? addForm.bicep
+                    : ''
+                }
+                onChange={(e) =>
+                  setAddForm((f) => ({
+                    ...f,
+                    bicep:
+                      e.target.value === '' ? null : Number(e.target.value),
+                  }))
+                }
+              />
             </div>
           </div>
           {/* Notes field */}
@@ -720,7 +1423,9 @@ const ClientsTable: React.FC = () => {
             <textarea
               className="w-full border rounded px-2 py-1"
               value={addForm.notes ?? ''}
-              onChange={e => setAddForm(f => ({ ...f, notes: e.target.value }))}
+              onChange={(e) =>
+                setAddForm((f) => ({ ...f, notes: e.target.value }))
+              }
               rows={2}
             />
           </div>
@@ -730,4 +1435,4 @@ const ClientsTable: React.FC = () => {
   );
 };
 
-export default ClientsTable; 
+export default ClientsTable;

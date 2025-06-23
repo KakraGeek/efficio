@@ -37,33 +37,35 @@ interface ClientForOrder {
 }
 
 // Define allowed statuses for orders
-const ORDER_STATUSES = [
-  'pending',
-  'in-progress',
-  'extended',
-  'completed',
-];
+const ORDER_STATUSES = ['pending', 'in-progress', 'extended', 'completed'];
 
 // Define columns for the orders table
 const columns: Column<Order>[] = [
   { accessor: 'id', header: 'Order ID' },
   { accessor: 'client_id', header: 'Client ID' },
-  { accessor: 'description', header: 'Description', render: (value) => value || '-' },
+  {
+    accessor: 'description',
+    header: 'Description',
+    render: (value) => value || '-',
+  },
   { accessor: 'status', header: 'Status', render: (value) => value || '-' },
   {
     accessor: 'due_date',
     header: 'Due Date',
-    render: (value) => value ? formatDateBritish(value) : '-',
+    render: (value) => (value ? formatDateBritish(value) : '-'),
   },
   {
     accessor: 'total_price',
     header: 'Total Amount (GHC)',
-    render: (value) => (typeof value === 'number' && !isNaN(value)) ? `GHC ${(value / 100).toFixed(2)}` : 'GHC —',
+    render: (value) =>
+      typeof value === 'number' && !isNaN(value)
+        ? `GHC ${(value / 100).toFixed(2)}`
+        : 'GHC —',
   },
   {
     accessor: 'created_at',
     header: 'Created At',
-    render: (value) => value ? formatDateBritish(value) : '-',
+    render: (value) => (value ? formatDateBritish(value) : '-'),
   },
 ];
 
@@ -142,11 +144,14 @@ const OrdersTable: React.FC = () => {
   // Edit modal state
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [orderToEdit, setOrderToEdit] = useState<Order | null>(null);
-  const [editForm, setEditForm] = useState<Partial<Order>>({ pendingSync: false });
+  const [editForm, setEditForm] = useState<Partial<Order>>({
+    pendingSync: false,
+  });
   // Add new modal state
   const [addModalOpen, setAddModalOpen] = useState(false);
   // Fetch all clients for the dropdown
-  const { data: clientsData, isLoading: clientsLoading } = trpc.getClients.useQuery();
+  const { data: clientsData, isLoading: clientsLoading } =
+    trpc.getClients.useQuery();
   // Add state for measurements and image upload
   const [addForm, setAddForm] = useState<any>({
     client_id: '',
@@ -180,7 +185,7 @@ const OrdersTable: React.FC = () => {
   const statusOptions = useMemo(() => {
     if (!data) return [];
     const set = new Set<string>();
-    data.forEach(row => set.add(row.status));
+    data.forEach((row) => set.add(row.status));
     return Array.from(set);
   }, [data]);
 
@@ -189,12 +194,12 @@ const OrdersTable: React.FC = () => {
     if (!data) return [];
     let filtered = data;
     if (statusFilter) {
-      filtered = filtered.filter(row => row.status === statusFilter);
+      filtered = filtered.filter((row) => row.status === statusFilter);
     }
     if (search.trim()) {
       const term = search.trim().toLowerCase();
-      filtered = filtered.filter(row =>
-        columns.some(col => {
+      filtered = filtered.filter((row) =>
+        columns.some((col) => {
           if (col.accessor === 'renderActions') return false;
           const key = col.accessor as keyof Order;
           if (key in row) {
@@ -212,7 +217,8 @@ const OrdersTable: React.FC = () => {
   // Sorting logic (applied after filtering)
   const sortedData = useMemo(() => {
     if (!filteredData) return [];
-    if (!sortState.column || sortState.column === 'renderActions') return filteredData;
+    if (!sortState.column || sortState.column === 'renderActions')
+      return filteredData;
 
     const sorted = [...filteredData].sort((a, b) => {
       const aValue = a[sortState.column as keyof OrderRow];
@@ -221,7 +227,9 @@ const OrdersTable: React.FC = () => {
       if (aValue === null || aValue === undefined) return -1;
       if (bValue === null || bValue === undefined) return 1;
       if (typeof aValue === 'number' && typeof bValue === 'number') {
-        return sortState.direction === 'asc' ? aValue - bValue : bValue - aValue;
+        return sortState.direction === 'asc'
+          ? aValue - bValue
+          : bValue - aValue;
       }
       return sortState.direction === 'asc'
         ? String(aValue).localeCompare(String(bValue))
@@ -239,7 +247,7 @@ const OrdersTable: React.FC = () => {
   }, [sortedData, currentPage, rowsPerPage]);
 
   // Only add renderActions after all filtering, sorting, and pagination
-  const paginatedDataWithActions: OrderRow[] = paginatedData.map(row => ({
+  const paginatedDataWithActions: OrderRow[] = paginatedData.map((row) => ({
     ...row,
     renderActions: () => (
       <>
@@ -272,7 +280,9 @@ const OrdersTable: React.FC = () => {
           Delete
         </button>
         {(row as any).pendingSync && (
-          <span className="ml-2 px-2 py-0.5 bg-yellow-400 text-xs rounded">Pending Sync</span>
+          <span className="ml-2 px-2 py-0.5 bg-yellow-400 text-xs rounded">
+            Pending Sync
+          </span>
         )}
       </>
     ),
@@ -287,14 +297,37 @@ const OrdersTable: React.FC = () => {
           type="checkbox"
           className="align-middle"
           aria-label="Select all"
-          checked={paginatedDataWithActions.length > 0 && paginatedDataWithActions.every(row => selectedIds.includes(row.id))}
+          checked={
+            paginatedDataWithActions.length > 0 &&
+            paginatedDataWithActions.every((row) =>
+              selectedIds.includes(row.id)
+            )
+          }
           // @ts-ignore: indeterminate is not a standard prop, but can be set via ref if needed
-          indeterminate={paginatedDataWithActions.some(row => selectedIds.includes(row.id)) && !paginatedDataWithActions.every(row => selectedIds.includes(row.id))}
-          onChange={e => {
+          indeterminate={
+            paginatedDataWithActions.some((row) =>
+              selectedIds.includes(row.id)
+            ) &&
+            !paginatedDataWithActions.every((row) =>
+              selectedIds.includes(row.id)
+            )
+          }
+          onChange={(e) => {
             if (e.target.checked) {
-              setSelectedIds(ids => Array.from(new Set([...ids, ...paginatedDataWithActions.map(row => row.id)])));
+              setSelectedIds((ids) =>
+                Array.from(
+                  new Set([
+                    ...ids,
+                    ...paginatedDataWithActions.map((row) => row.id),
+                  ])
+                )
+              );
             } else {
-              setSelectedIds(ids => ids.filter(id => !paginatedDataWithActions.some(row => row.id === id)));
+              setSelectedIds((ids) =>
+                ids.filter(
+                  (id) => !paginatedDataWithActions.some((row) => row.id === id)
+                )
+              );
             }
           }}
         />
@@ -303,11 +336,11 @@ const OrdersTable: React.FC = () => {
         <input
           type="checkbox"
           checked={selectedIds.includes(row.id)}
-          onChange={e => {
+          onChange={(e) => {
             if (e.target.checked) {
-              setSelectedIds(ids => [...ids, row.id]);
+              setSelectedIds((ids) => [...ids, row.id]);
             } else {
-              setSelectedIds(ids => ids.filter(id => id !== row.id));
+              setSelectedIds((ids) => ids.filter((id) => id !== row.id));
             }
           }}
           className="align-middle"
@@ -315,11 +348,13 @@ const OrdersTable: React.FC = () => {
         />
       ),
     },
-    ...columnsWithActions.filter(col => col.accessor !== 'renderActions'),
+    ...columnsWithActions.filter((col) => col.accessor !== 'renderActions'),
     // Add the renderActions column back with a valid accessor
     {
       accessor: 'renderActions',
-      header: columnsWithActions.find(col => col.accessor === 'renderActions')?.header ?? 'Actions',
+      header:
+        columnsWithActions.find((col) => col.accessor === 'renderActions')
+          ?.header ?? 'Actions',
       render: (_value, row) => (
         <>
           <button
@@ -351,7 +386,9 @@ const OrdersTable: React.FC = () => {
             Delete
           </button>
           {(row as any).pendingSync && (
-            <span className="ml-2 px-2 py-0.5 bg-yellow-400 text-xs rounded">Pending Sync</span>
+            <span className="ml-2 px-2 py-0.5 bg-yellow-400 text-xs rounded">
+              Pending Sync
+            </span>
           )}
         </>
       ),
@@ -361,7 +398,9 @@ const OrdersTable: React.FC = () => {
   // Prefill measurements when client changes
   React.useEffect(() => {
     if (!addForm.client_id || !clientsData) return;
-    const client = clientsData.find((c: ClientForOrder) => c.id === Number(addForm.client_id));
+    const client = clientsData.find(
+      (c: ClientForOrder) => c.id === Number(addForm.client_id)
+    );
     if (client) {
       setAddForm((f: any) => ({
         ...f,
@@ -408,7 +447,9 @@ const OrdersTable: React.FC = () => {
     setRowsPerPage(Number(e.target.value));
     setCurrentPage(1); // Reset to first page
   };
-  const handleStatusFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+  const handleStatusFilterChange = (
+    e: React.ChangeEvent<HTMLSelectElement>
+  ) => {
     setStatusFilter(e.target.value);
     setCurrentPage(1);
   };
@@ -419,7 +460,9 @@ const OrdersTable: React.FC = () => {
   }, [search, rowsPerPage, sortState]);
 
   // At the top of OrdersTable, count unsynced orders
-  const pendingCount = (data || []).filter(o => (o as any).pendingSync).length;
+  const pendingCount = (data || []).filter(
+    (o) => (o as any).pendingSync
+  ).length;
 
   if (isLoading) return <div>Loading orders...</div>;
   if (error) return <div className="text-red-500">Error: {error.message}</div>;
@@ -428,15 +471,35 @@ const OrdersTable: React.FC = () => {
     <div className="p-4">
       {pendingCount > 0 && (
         <div className="mb-2 text-yellow-700 bg-yellow-100 border border-yellow-300 rounded px-3 py-2 flex items-center gap-2">
-          <span className="font-semibold">{pendingCount} order{pendingCount > 1 ? 's' : ''} pending sync</span>
-          <span className="ml-2 px-2 py-0.5 bg-yellow-400 text-xs rounded">Pending Sync</span>
+          <span className="font-semibold">
+            {pendingCount} order{pendingCount > 1 ? 's' : ''} pending sync
+          </span>
+          <span className="ml-2 px-2 py-0.5 bg-yellow-400 text-xs rounded">
+            Pending Sync
+          </span>
         </div>
       )}
       <div className="mb-4">
         <button
           className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
           onClick={() => {
-            setAddForm({ client_id: '', status: '', description: '', due_date: '', total_price: '', neck: '', chest: '', bust: '', waist: '', hips: '', thigh: '', inseam: '', arm_length: '', notes: '', pendingSync: false });
+            setAddForm({
+              client_id: '',
+              status: '',
+              description: '',
+              due_date: '',
+              total_price: '',
+              neck: '',
+              chest: '',
+              bust: '',
+              waist: '',
+              hips: '',
+              thigh: '',
+              inseam: '',
+              arm_length: '',
+              notes: '',
+              pendingSync: false,
+            });
             setAddModalOpen(true);
           }}
         >
@@ -450,7 +513,9 @@ const OrdersTable: React.FC = () => {
           Delete Selected
         </button>
         {selectedIds.length > 0 && (
-          <span className="text-sm text-gray-600 ml-2">{selectedIds.length} selected</span>
+          <span className="text-sm text-gray-600 ml-2">
+            {selectedIds.length} selected
+          </span>
         )}
       </div>
       <div className="flex flex-col sm:flex-row gap-2 mb-4">
@@ -458,7 +523,7 @@ const OrdersTable: React.FC = () => {
           type="text"
           placeholder="Search orders..."
           value={search}
-          onChange={e => setSearch(e.target.value)}
+          onChange={(e) => setSearch(e.target.value)}
           className="w-full max-w-xs px-3 py-2 border rounded shadow-sm focus:outline-none focus:ring"
         />
         <select
@@ -467,8 +532,10 @@ const OrdersTable: React.FC = () => {
           className="w-full max-w-xs px-3 py-2 border rounded shadow-sm focus:outline-none focus:ring"
         >
           <option value="">All Statuses</option>
-          {ORDER_STATUSES.map(status => (
-            <option key={status} value={status}>{status.charAt(0).toUpperCase() + status.slice(1)}</option>
+          {ORDER_STATUSES.map((status) => (
+            <option key={status} value={status}>
+              {status.charAt(0).toUpperCase() + status.slice(1)}
+            </option>
           ))}
         </select>
       </div>
@@ -488,7 +555,7 @@ const OrdersTable: React.FC = () => {
           >
             Previous
           </button>
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
             <button
               key={page}
               className={`px-3 py-1 border rounded mx-1 ${page === currentPage ? 'bg-blue-100 font-bold' : ''}`}
@@ -513,8 +580,10 @@ const OrdersTable: React.FC = () => {
             onChange={handleRowsPerPageChange}
             className="border rounded px-2 py-1"
           >
-            {[5, 10, 20, 50].map(n => (
-              <option key={n} value={n}>{n}</option>
+            {[5, 10, 20, 50].map((n) => (
+              <option key={n} value={n}>
+                {n}
+              </option>
             ))}
           </select>
         </div>
@@ -527,12 +596,18 @@ const OrdersTable: React.FC = () => {
       {/* View Details Modal */}
       <Modal
         open={viewModalOpen}
-        onClose={() => { setViewModalOpen(false); setOrderToView(null); }}
+        onClose={() => {
+          setViewModalOpen(false);
+          setOrderToView(null);
+        }}
         title="Order Details"
         actions={
           <button
             className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300"
-            onClick={() => { setViewModalOpen(false); setOrderToView(null); }}
+            onClick={() => {
+              setViewModalOpen(false);
+              setOrderToView(null);
+            }}
           >
             Close
           </button>
@@ -540,29 +615,67 @@ const OrdersTable: React.FC = () => {
       >
         {orderToView ? (
           <div className="space-y-2">
-            <div><span className="font-semibold">Order ID:</span> {orderToView.id} {(orderToView as any).pendingSync && (
-              <span className="ml-2 px-2 py-0.5 bg-yellow-400 text-xs rounded">Pending Sync</span>
-            )}</div>
-            <div><span className="font-semibold">Client ID:</span> {orderToView.client_id}</div>
-            <div><span className="font-semibold">Status:</span> {orderToView.status}</div>
-            <div><span className="font-semibold">Description:</span> {orderToView.description || '—'}</div>
-            <div><span className="font-semibold">Due Date:</span> {orderToView.due_date ? formatDateBritish(orderToView.due_date) : '—'}</div>
-            <div><span className="font-semibold">Total Price:</span> {orderToView.total_price !== null ? `₵${(orderToView.total_price / 100).toFixed(2)}` : '—'}</div>
-            <div><span className="font-semibold">Created At:</span> {formatDateBritish(orderToView.created_at)}</div>
-            <div><span className="font-semibold">Last Updated:</span> {formatDateBritish(orderToView.updated_at)}</div>
+            <div>
+              <span className="font-semibold">Order ID:</span> {orderToView.id}{' '}
+              {(orderToView as any).pendingSync && (
+                <span className="ml-2 px-2 py-0.5 bg-yellow-400 text-xs rounded">
+                  Pending Sync
+                </span>
+              )}
+            </div>
+            <div>
+              <span className="font-semibold">Client ID:</span>{' '}
+              {orderToView.client_id}
+            </div>
+            <div>
+              <span className="font-semibold">Status:</span>{' '}
+              {orderToView.status}
+            </div>
+            <div>
+              <span className="font-semibold">Description:</span>{' '}
+              {orderToView.description || '—'}
+            </div>
+            <div>
+              <span className="font-semibold">Due Date:</span>{' '}
+              {orderToView.due_date
+                ? formatDateBritish(orderToView.due_date)
+                : '—'}
+            </div>
+            <div>
+              <span className="font-semibold">Total Price:</span>{' '}
+              {orderToView.total_price !== null
+                ? `₵${(orderToView.total_price / 100).toFixed(2)}`
+                : '—'}
+            </div>
+            <div>
+              <span className="font-semibold">Created At:</span>{' '}
+              {formatDateBritish(orderToView.created_at)}
+            </div>
+            <div>
+              <span className="font-semibold">Last Updated:</span>{' '}
+              {formatDateBritish(orderToView.updated_at)}
+            </div>
           </div>
         ) : null}
       </Modal>
       {/* Edit Order Modal */}
       <Modal
         open={editModalOpen}
-        onClose={() => { setEditModalOpen(false); setOrderToEdit(null); setEditForm({ pendingSync: false }); }}
+        onClose={() => {
+          setEditModalOpen(false);
+          setOrderToEdit(null);
+          setEditForm({ pendingSync: false });
+        }}
         title="Edit Order"
         actions={
           <>
             <button
               className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300 mr-2"
-              onClick={() => { setEditModalOpen(false); setOrderToEdit(null); setEditForm({ pendingSync: false }); }}
+              onClick={() => {
+                setEditModalOpen(false);
+                setOrderToEdit(null);
+                setEditForm({ pendingSync: false });
+              }}
             >
               Cancel
             </button>
@@ -599,19 +712,25 @@ const OrdersTable: React.FC = () => {
         {orderToEdit ? (
           <form
             className="space-y-3"
-            onSubmit={e => { e.preventDefault(); }}
+            onSubmit={(e) => {
+              e.preventDefault();
+            }}
           >
             <div>
               <label className="block font-semibold mb-1">Status</label>
               <select
                 className="w-full border rounded px-2 py-1"
                 value={editForm.status ?? ''}
-                onChange={e => setEditForm(f => ({ ...f, status: e.target.value }))}
+                onChange={(e) =>
+                  setEditForm((f) => ({ ...f, status: e.target.value }))
+                }
                 required
               >
                 <option value="">Select status</option>
-                {ORDER_STATUSES.map(status => (
-                  <option key={status} value={status}>{status.charAt(0).toUpperCase() + status.slice(1)}</option>
+                {ORDER_STATUSES.map((status) => (
+                  <option key={status} value={status}>
+                    {status.charAt(0).toUpperCase() + status.slice(1)}
+                  </option>
                 ))}
               </select>
             </div>
@@ -620,7 +739,9 @@ const OrdersTable: React.FC = () => {
               <input
                 className="w-full border rounded px-2 py-1"
                 value={editForm.description ?? ''}
-                onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))}
+                onChange={(e) =>
+                  setEditForm((f) => ({ ...f, description: e.target.value }))
+                }
               />
             </div>
             {/* Add more fields as needed */}
@@ -630,13 +751,55 @@ const OrdersTable: React.FC = () => {
       {/* Add New Order Modal */}
       <Modal
         open={addModalOpen}
-        onClose={() => { setAddModalOpen(false); setAddForm({ client_id: '', status: '', description: '', due_date: '', total_price: '', neck: '', chest: '', bust: '', waist: '', hips: '', thigh: '', inseam: '', arm_length: '', notes: '', pendingSync: false }); setAddImage(null); setAddImagePreview(null); }}
+        onClose={() => {
+          setAddModalOpen(false);
+          setAddForm({
+            client_id: '',
+            status: '',
+            description: '',
+            due_date: '',
+            total_price: '',
+            neck: '',
+            chest: '',
+            bust: '',
+            waist: '',
+            hips: '',
+            thigh: '',
+            inseam: '',
+            arm_length: '',
+            notes: '',
+            pendingSync: false,
+          });
+          setAddImage(null);
+          setAddImagePreview(null);
+        }}
         title="Add New Order"
         actions={
           <>
             <button
               className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300 mr-2"
-              onClick={() => { setAddModalOpen(false); setAddForm({ client_id: '', status: '', description: '', due_date: '', total_price: '', neck: '', chest: '', bust: '', waist: '', hips: '', thigh: '', inseam: '', arm_length: '', notes: '', pendingSync: false }); setAddImage(null); setAddImagePreview(null); }}
+              onClick={() => {
+                setAddModalOpen(false);
+                setAddForm({
+                  client_id: '',
+                  status: '',
+                  description: '',
+                  due_date: '',
+                  total_price: '',
+                  neck: '',
+                  chest: '',
+                  bust: '',
+                  waist: '',
+                  hips: '',
+                  thigh: '',
+                  inseam: '',
+                  arm_length: '',
+                  notes: '',
+                  pendingSync: false,
+                });
+                setAddImage(null);
+                setAddImagePreview(null);
+              }}
             >
               Cancel
             </button>
@@ -644,7 +807,12 @@ const OrdersTable: React.FC = () => {
               className="px-4 py-2 rounded bg-green-600 text-white hover:bg-green-700"
               onClick={async () => {
                 // Validate required fields
-                if (!addForm.client_id || !addForm.status || !addForm.due_date || !addForm.total_price) {
+                if (
+                  !addForm.client_id ||
+                  !addForm.status ||
+                  !addForm.due_date ||
+                  !addForm.total_price
+                ) {
                   toast.error('Please fill in all required fields.');
                   return;
                 }
@@ -681,7 +849,23 @@ const OrdersTable: React.FC = () => {
                   });
                   toast.success(`Order added successfully!`);
                   setAddModalOpen(false);
-                  setAddForm({ client_id: '', status: '', description: '', due_date: '', total_price: '', neck: '', chest: '', bust: '', waist: '', hips: '', thigh: '', inseam: '', arm_length: '', notes: '', pendingSync: false });
+                  setAddForm({
+                    client_id: '',
+                    status: '',
+                    description: '',
+                    due_date: '',
+                    total_price: '',
+                    neck: '',
+                    chest: '',
+                    bust: '',
+                    waist: '',
+                    hips: '',
+                    thigh: '',
+                    inseam: '',
+                    arm_length: '',
+                    notes: '',
+                    pendingSync: false,
+                  });
                   setAddImage(null);
                   setAddImagePreview(null);
                 } catch (err) {
@@ -696,21 +880,30 @@ const OrdersTable: React.FC = () => {
       >
         <form
           className="space-y-3"
-          onSubmit={e => { e.preventDefault(); }}
+          onSubmit={(e) => {
+            e.preventDefault();
+          }}
         >
           {/* Client Dropdown */}
           <div>
-            <label className="block font-semibold mb-1">Client <span className="text-red-500">*</span></label>
+            <label className="block font-semibold mb-1">
+              Client <span className="text-red-500">*</span>
+            </label>
             <select
               className="w-full border rounded px-2 py-1"
               value={addForm.client_id}
-              onChange={e => setAddForm((f: any) => ({ ...f, client_id: e.target.value }))}
+              onChange={(e) =>
+                setAddForm((f: any) => ({ ...f, client_id: e.target.value }))
+              }
               required
             >
               <option value="">Select a client</option>
-              {clientsData && clientsData.map((c: ClientForOrder) => (
-                <option key={c.id} value={c.id}>{c.name}</option>
-              ))}
+              {clientsData &&
+                clientsData.map((c: ClientForOrder) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
             </select>
           </div>
           {/* Description */}
@@ -719,43 +912,59 @@ const OrdersTable: React.FC = () => {
             <input
               className="w-full border rounded px-2 py-1"
               value={addForm.description ?? ''}
-              onChange={e => setAddForm((f: any) => ({ ...f, description: e.target.value }))}
+              onChange={(e) =>
+                setAddForm((f: any) => ({ ...f, description: e.target.value }))
+              }
             />
           </div>
           {/* Status */}
           <div>
-            <label className="block font-semibold mb-1">Status <span className="text-red-500">*</span></label>
+            <label className="block font-semibold mb-1">
+              Status <span className="text-red-500">*</span>
+            </label>
             <select
               className="w-full border rounded px-2 py-1"
               value={addForm.status ?? ''}
-              onChange={e => setAddForm((f: any) => ({ ...f, status: e.target.value }))}
+              onChange={(e) =>
+                setAddForm((f: any) => ({ ...f, status: e.target.value }))
+              }
               required
             >
               <option value="">Select status</option>
-              {ORDER_STATUSES.map(status => (
-                <option key={status} value={status}>{status.charAt(0).toUpperCase() + status.slice(1)}</option>
+              {ORDER_STATUSES.map((status) => (
+                <option key={status} value={status}>
+                  {status.charAt(0).toUpperCase() + status.slice(1)}
+                </option>
               ))}
             </select>
           </div>
           {/* Due Date */}
           <div>
-            <label className="block font-semibold mb-1">Due Date <span className="text-red-500">*</span></label>
+            <label className="block font-semibold mb-1">
+              Due Date <span className="text-red-500">*</span>
+            </label>
             <input
               type="date"
               className="w-full border rounded px-2 py-1"
               value={addForm.due_date ?? ''}
-              onChange={e => setAddForm((f: any) => ({ ...f, due_date: e.target.value }))}
+              onChange={(e) =>
+                setAddForm((f: any) => ({ ...f, due_date: e.target.value }))
+              }
               required
             />
           </div>
           {/* Amount */}
           <div>
-            <label className="block font-semibold mb-1">Total Price (GHC) <span className="text-red-500">*</span></label>
+            <label className="block font-semibold mb-1">
+              Total Price (GHC) <span className="text-red-500">*</span>
+            </label>
             <input
               type="number"
               className="w-full border rounded px-2 py-1"
               value={addForm.total_price ?? ''}
-              onChange={e => setAddForm((f: any) => ({ ...f, total_price: e.target.value }))}
+              onChange={(e) =>
+                setAddForm((f: any) => ({ ...f, total_price: e.target.value }))
+              }
               required
               min="0"
             />
@@ -764,35 +973,91 @@ const OrdersTable: React.FC = () => {
           <div className="grid grid-cols-2 gap-2">
             <div>
               <label className="block text-xs font-medium">Neck</label>
-              <input type="number" className="w-full border rounded px-2 py-1" value={addForm.neck ?? ''} onChange={e => setAddForm((f: any) => ({ ...f, neck: e.target.value }))} />
+              <input
+                type="number"
+                className="w-full border rounded px-2 py-1"
+                value={addForm.neck ?? ''}
+                onChange={(e) =>
+                  setAddForm((f: any) => ({ ...f, neck: e.target.value }))
+                }
+              />
             </div>
             <div>
               <label className="block text-xs font-medium">Chest</label>
-              <input type="number" className="w-full border rounded px-2 py-1" value={addForm.chest ?? ''} onChange={e => setAddForm((f: any) => ({ ...f, chest: e.target.value }))} />
+              <input
+                type="number"
+                className="w-full border rounded px-2 py-1"
+                value={addForm.chest ?? ''}
+                onChange={(e) =>
+                  setAddForm((f: any) => ({ ...f, chest: e.target.value }))
+                }
+              />
             </div>
             <div>
               <label className="block text-xs font-medium">Bust</label>
-              <input type="number" className="w-full border rounded px-2 py-1" value={addForm.bust ?? ''} onChange={e => setAddForm((f: any) => ({ ...f, bust: e.target.value }))} />
+              <input
+                type="number"
+                className="w-full border rounded px-2 py-1"
+                value={addForm.bust ?? ''}
+                onChange={(e) =>
+                  setAddForm((f: any) => ({ ...f, bust: e.target.value }))
+                }
+              />
             </div>
             <div>
               <label className="block text-xs font-medium">Waist</label>
-              <input type="number" className="w-full border rounded px-2 py-1" value={addForm.waist ?? ''} onChange={e => setAddForm((f: any) => ({ ...f, waist: e.target.value }))} />
+              <input
+                type="number"
+                className="w-full border rounded px-2 py-1"
+                value={addForm.waist ?? ''}
+                onChange={(e) =>
+                  setAddForm((f: any) => ({ ...f, waist: e.target.value }))
+                }
+              />
             </div>
             <div>
               <label className="block text-xs font-medium">Hips</label>
-              <input type="number" className="w-full border rounded px-2 py-1" value={addForm.hips ?? ''} onChange={e => setAddForm((f: any) => ({ ...f, hips: e.target.value }))} />
+              <input
+                type="number"
+                className="w-full border rounded px-2 py-1"
+                value={addForm.hips ?? ''}
+                onChange={(e) =>
+                  setAddForm((f: any) => ({ ...f, hips: e.target.value }))
+                }
+              />
             </div>
             <div>
               <label className="block text-xs font-medium">Thigh</label>
-              <input type="number" className="w-full border rounded px-2 py-1" value={addForm.thigh ?? ''} onChange={e => setAddForm((f: any) => ({ ...f, thigh: e.target.value }))} />
+              <input
+                type="number"
+                className="w-full border rounded px-2 py-1"
+                value={addForm.thigh ?? ''}
+                onChange={(e) =>
+                  setAddForm((f: any) => ({ ...f, thigh: e.target.value }))
+                }
+              />
             </div>
             <div>
               <label className="block text-xs font-medium">Inseam</label>
-              <input type="number" className="w-full border rounded px-2 py-1" value={addForm.inseam ?? ''} onChange={e => setAddForm((f: any) => ({ ...f, inseam: e.target.value }))} />
+              <input
+                type="number"
+                className="w-full border rounded px-2 py-1"
+                value={addForm.inseam ?? ''}
+                onChange={(e) =>
+                  setAddForm((f: any) => ({ ...f, inseam: e.target.value }))
+                }
+              />
             </div>
             <div>
               <label className="block text-xs font-medium">Arm Length</label>
-              <input type="number" className="w-full border rounded px-2 py-1" value={addForm.arm_length ?? ''} onChange={e => setAddForm((f: any) => ({ ...f, arm_length: e.target.value }))} />
+              <input
+                type="number"
+                className="w-full border rounded px-2 py-1"
+                value={addForm.arm_length ?? ''}
+                onChange={(e) =>
+                  setAddForm((f: any) => ({ ...f, arm_length: e.target.value }))
+                }
+              />
             </div>
           </div>
           {/* Notes field */}
@@ -801,13 +1066,17 @@ const OrdersTable: React.FC = () => {
             <textarea
               className="w-full border rounded px-2 py-1"
               value={addForm.notes ?? ''}
-              onChange={e => setAddForm((f: any) => ({ ...f, notes: e.target.value }))}
+              onChange={(e) =>
+                setAddForm((f: any) => ({ ...f, notes: e.target.value }))
+              }
               rows={2}
             />
           </div>
           {/* Image Upload */}
           <div>
-            <label className="block font-semibold mb-1">Order Image (optional)</label>
+            <label className="block font-semibold mb-1">
+              Order Image (optional)
+            </label>
             <input
               type="file"
               accept="image/*"
@@ -815,7 +1084,11 @@ const OrdersTable: React.FC = () => {
               className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
             />
             {addImagePreview && (
-              <img src={addImagePreview} alt="Order Preview" className="mt-3 h-20 object-contain rounded border" />
+              <img
+                src={addImagePreview}
+                alt="Order Preview"
+                className="mt-3 h-20 object-contain rounded border"
+              />
             )}
           </div>
         </form>
@@ -823,13 +1096,19 @@ const OrdersTable: React.FC = () => {
       {/* Delete Confirmation Modal */}
       <Modal
         open={deleteModalOpen}
-        onClose={() => { setDeleteModalOpen(false); setOrderToDelete(null); }}
+        onClose={() => {
+          setDeleteModalOpen(false);
+          setOrderToDelete(null);
+        }}
         title="Confirm Delete"
         actions={
           <>
             <button
               className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300 mr-2"
-              onClick={() => { setDeleteModalOpen(false); setOrderToDelete(null); }}
+              onClick={() => {
+                setDeleteModalOpen(false);
+                setOrderToDelete(null);
+              }}
             >
               Cancel
             </button>
@@ -847,7 +1126,10 @@ const OrdersTable: React.FC = () => {
         }
       >
         {orderToDelete ? (
-          <p>Are you sure you want to delete order <span className="font-semibold">{orderToDelete.id}</span>?</p>
+          <p>
+            Are you sure you want to delete order{' '}
+            <span className="font-semibold">{orderToDelete.id}</span>?
+          </p>
         ) : null}
       </Modal>
       {/* Bulk Delete Modal */}
@@ -866,7 +1148,9 @@ const OrdersTable: React.FC = () => {
             <button
               className="px-4 py-2 rounded bg-red-600 text-white hover:bg-red-700"
               onClick={() => {
-                toast.success(`${selectedIds.length} order(s) deleted successfully!`);
+                toast.success(
+                  `${selectedIds.length} order(s) deleted successfully!`
+                );
                 setBulkDeleteModalOpen(false);
                 setSelectedIds([]);
               }}
@@ -877,11 +1161,13 @@ const OrdersTable: React.FC = () => {
         }
       >
         <div className="py-4 text-center">
-          Are you sure you want to delete <span className="font-semibold">{selectedIds.length}</span> selected order(s)?
+          Are you sure you want to delete{' '}
+          <span className="font-semibold">{selectedIds.length}</span> selected
+          order(s)?
         </div>
       </Modal>
     </div>
   );
 };
 
-export default OrdersTable; 
+export default OrdersTable;

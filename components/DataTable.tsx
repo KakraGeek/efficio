@@ -32,7 +32,12 @@ interface DataTableProps<T> {
  * - onSort: function to call when a header is clicked
  * - sortState: current sort state (column and direction)
  */
-function DataTable<T extends object>({ columns, data, onSort, sortState }: DataTableProps<T>) {
+function DataTable<T extends object>({
+  columns,
+  data,
+  onSort,
+  sortState,
+}: DataTableProps<T>) {
   // Helper to show sort indicator
   const getSortIndicator = (col: Column<T>) => {
     if (!sortState || sortState.column !== col.accessor) return null;
@@ -63,7 +68,10 @@ function DataTable<T extends object>({ columns, data, onSort, sortState }: DataT
         <tbody>
           {data.length === 0 ? (
             <tr>
-              <td colSpan={columns.length} className="px-4 py-4 text-center text-gray-400">
+              <td
+                colSpan={columns.length}
+                className="px-4 py-4 text-center text-gray-400"
+              >
                 No data available.
               </td>
             </tr>
@@ -74,10 +82,7 @@ function DataTable<T extends object>({ columns, data, onSort, sortState }: DataT
                   <td key={String(col.accessor)} className="px-4 py-2">
                     {/* If a custom render function is provided, use it. Otherwise, show the value. */}
                     {col.render
-                      ? col.render(
-                          row[col.accessor as keyof T],
-                          row
-                        )
+                      ? col.render(row[col.accessor as keyof T], row)
                       : String(row[col.accessor as keyof T] ?? '')}
                   </td>
                 ))}
@@ -90,4 +95,4 @@ function DataTable<T extends object>({ columns, data, onSort, sortState }: DataT
   );
 }
 
-export default DataTable; 
+export default DataTable;

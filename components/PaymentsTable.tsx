@@ -30,15 +30,22 @@ const columns: Column<Payment>[] = [
   {
     accessor: 'amount',
     header: 'Amount (GHC)',
-    render: (value) => (typeof value === 'number' && !isNaN(value)) ? `GHC ${(value / 100).toFixed(2)}` : 'GHC —',
+    render: (value) =>
+      typeof value === 'number' && !isNaN(value)
+        ? `GHC ${(value / 100).toFixed(2)}`
+        : 'GHC —',
   },
   { accessor: 'method', header: 'Method', render: (value) => value || '-' },
   { accessor: 'status', header: 'Status', render: (value) => value || '-' },
-  { accessor: 'transaction_ref', header: 'Transaction Ref', render: (value) => value || '-' },
+  {
+    accessor: 'transaction_ref',
+    header: 'Transaction Ref',
+    render: (value) => value || '-',
+  },
   {
     accessor: 'created_at',
     header: 'Date',
-    render: (value) => value ? formatDateBritish(value) : '-',
+    render: (value) => (value ? formatDateBritish(value) : '-'),
   },
 ];
 
@@ -78,7 +85,7 @@ const PaymentsTable: React.FC = () => {
     },
     onError: (error: any) => {
       toast.error(`Error creating payment: ${error.message}`);
-    }
+    },
   });
   const updatePayment = trpc.updatePayment.useMutation({
     onSuccess: () => {
@@ -87,7 +94,7 @@ const PaymentsTable: React.FC = () => {
     },
     onError: (error: any) => {
       toast.error(`Error updating payment: ${error.message}`);
-    }
+    },
   });
   const deletePayment = trpc.deletePayment.useMutation({
     onSuccess: () => {
@@ -96,7 +103,7 @@ const PaymentsTable: React.FC = () => {
     },
     onError: (error: any) => {
       toast.error(`Error deleting payment: ${error.message}`);
-    }
+    },
   });
   const bulkDeletePayments = trpc.bulkDeletePayments.useMutation({
     onSuccess: () => {
@@ -105,10 +112,11 @@ const PaymentsTable: React.FC = () => {
     },
     onError: (error: any) => {
       toast.error(`Error deleting payments: ${error.message}`);
-    }
+    },
   });
   console.log('PaymentsTable data:', data);
-  const [sortState, setSortState] = useState<SortState<PaymentRow>>(defaultSort);
+  const [sortState, setSortState] =
+    useState<SortState<PaymentRow>>(defaultSort);
   const [search, setSearch] = useState('');
   const [methodFilter, setMethodFilter] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -119,10 +127,16 @@ const PaymentsTable: React.FC = () => {
   // Edit modal state
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [paymentToEdit, setPaymentToEdit] = useState<Payment | null>(null);
-  const [editForm, setEditForm] = useState<Partial<Payment>>({ pendingSync: false });
+  const [editForm, setEditForm] = useState<Partial<Payment>>({
+    pendingSync: false,
+  });
   // Add new modal state
   const [addModalOpen, setAddModalOpen] = useState(false);
-  const [addForm, setAddForm] = useState<Partial<Payment>>({ amount: 0, method: '', pendingSync: false });
+  const [addForm, setAddForm] = useState<Partial<Payment>>({
+    amount: 0,
+    method: '',
+    pendingSync: false,
+  });
   // Delete modal state
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [paymentToDelete, setPaymentToDelete] = useState<Payment | null>(null);
@@ -135,7 +149,7 @@ const PaymentsTable: React.FC = () => {
   const methodOptions = useMemo(() => {
     if (!data) return [];
     const set = new Set<string>();
-    data.forEach(row => {
+    data.forEach((row) => {
       if (row.method) set.add(row.method);
     });
     return Array.from(set);
@@ -146,15 +160,18 @@ const PaymentsTable: React.FC = () => {
     if (!data) return [];
     let filtered = data;
     if (methodFilter) {
-      filtered = filtered.filter(row => row.method === methodFilter);
+      filtered = filtered.filter((row) => row.method === methodFilter);
     }
     if (search.trim()) {
       const term = search.trim().toLowerCase();
-      filtered = filtered.filter(row =>
-        columns.some(col => {
+      filtered = filtered.filter((row) =>
+        columns.some((col) => {
           // Only filter on real Payment fields
           if (col.accessor === 'renderActions') return false;
-          if (typeof col.accessor === 'string' && (col.accessor as keyof Payment) in row) {
+          if (
+            typeof col.accessor === 'string' &&
+            (col.accessor as keyof Payment) in row
+          ) {
             const value = row[col.accessor as keyof Payment];
             if (value === null || value === undefined) return false;
             return String(value).toLowerCase().includes(term);
@@ -177,7 +194,9 @@ const PaymentsTable: React.FC = () => {
       if (aValue === null || aValue === undefined) return 1;
       if (bValue === null || bValue === undefined) return -1;
       if (typeof aValue === 'number' && typeof bValue === 'number') {
-        return sortState.direction === 'asc' ? aValue - bValue : bValue - aValue;
+        return sortState.direction === 'asc'
+          ? aValue - bValue
+          : bValue - aValue;
       }
       return sortState.direction === 'asc'
         ? String(aValue).localeCompare(String(bValue))
@@ -195,7 +214,7 @@ const PaymentsTable: React.FC = () => {
   }, [sortedData, currentPage, rowsPerPage]);
 
   // Only add renderActions after all filtering, sorting, and pagination
-  const paginatedDataWithActions: PaymentRow[] = paginatedData.map(row => ({
+  const paginatedDataWithActions: PaymentRow[] = paginatedData.map((row) => ({
     ...row,
     renderActions: () => (
       <>
@@ -228,7 +247,9 @@ const PaymentsTable: React.FC = () => {
           Delete
         </button>
         {row.pendingSync && (
-          <span className="ml-2 px-2 py-0.5 bg-yellow-400 text-xs rounded">Pending Sync</span>
+          <span className="ml-2 px-2 py-0.5 bg-yellow-400 text-xs rounded">
+            Pending Sync
+          </span>
         )}
       </>
     ),
@@ -238,8 +259,12 @@ const PaymentsTable: React.FC = () => {
   const selectAllRef = React.useRef<HTMLInputElement>(null);
   React.useEffect(() => {
     if (selectAllRef.current) {
-      const allSelected = paginatedDataWithActions.length > 0 && paginatedDataWithActions.every(row => selectedIds.includes(row.id));
-      const someSelected = paginatedDataWithActions.some(row => selectedIds.includes(row.id));
+      const allSelected =
+        paginatedDataWithActions.length > 0 &&
+        paginatedDataWithActions.every((row) => selectedIds.includes(row.id));
+      const someSelected = paginatedDataWithActions.some((row) =>
+        selectedIds.includes(row.id)
+      );
       selectAllRef.current.indeterminate = someSelected && !allSelected;
     }
   }, [paginatedDataWithActions, selectedIds]);
@@ -253,10 +278,15 @@ const PaymentsTable: React.FC = () => {
           className="align-middle"
           aria-label="Select all"
           ref={selectAllRef}
-          checked={paginatedDataWithActions.length > 0 && paginatedDataWithActions.every(row => selectedIds.includes(row.id))}
-          onChange={e => {
+          checked={
+            paginatedDataWithActions.length > 0 &&
+            paginatedDataWithActions.every((row) =>
+              selectedIds.includes(row.id)
+            )
+          }
+          onChange={(e) => {
             if (e.target.checked) {
-              setSelectedIds(paginatedDataWithActions.map(row => row.id));
+              setSelectedIds(paginatedDataWithActions.map((row) => row.id));
             } else {
               setSelectedIds([]);
             }
@@ -267,11 +297,11 @@ const PaymentsTable: React.FC = () => {
         <input
           type="checkbox"
           checked={selectedIds.includes(row.id)}
-          onChange={e => {
+          onChange={(e) => {
             if (e.target.checked) {
-              setSelectedIds(ids => [...ids, row.id]);
+              setSelectedIds((ids) => [...ids, row.id]);
             } else {
-              setSelectedIds(ids => ids.filter(id => id !== row.id));
+              setSelectedIds((ids) => ids.filter((id) => id !== row.id));
             }
           }}
           className="align-middle"
@@ -299,7 +329,9 @@ const PaymentsTable: React.FC = () => {
     setRowsPerPage(Number(e.target.value));
     setCurrentPage(1); // Reset to first page
   };
-  const handleMethodFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+  const handleMethodFilterChange = (
+    e: React.ChangeEvent<HTMLSelectElement>
+  ) => {
     setMethodFilter(e.target.value);
     setCurrentPage(1);
   };
@@ -310,7 +342,7 @@ const PaymentsTable: React.FC = () => {
   }, [search, rowsPerPage, sortState]);
 
   // At the top of PaymentsTable, count unsynced payments
-  const pendingCount = (data || []).filter(p => p.pendingSync).length;
+  const pendingCount = (data || []).filter((p) => p.pendingSync).length;
 
   if (isLoading) return <div>Loading payments...</div>;
   if (error) return <div className="text-red-500">Error: {error.message}</div>;
@@ -319,8 +351,12 @@ const PaymentsTable: React.FC = () => {
     <div className="p-4">
       {pendingCount > 0 && (
         <div className="mb-2 text-yellow-700 bg-yellow-100 border border-yellow-300 rounded px-3 py-2 flex items-center gap-2">
-          <span className="font-semibold">{pendingCount} payment{pendingCount > 1 ? 's' : ''} pending sync</span>
-          <span className="ml-2 px-2 py-0.5 bg-yellow-400 text-xs rounded">Pending Sync</span>
+          <span className="font-semibold">
+            {pendingCount} payment{pendingCount > 1 ? 's' : ''} pending sync
+          </span>
+          <span className="ml-2 px-2 py-0.5 bg-yellow-400 text-xs rounded">
+            Pending Sync
+          </span>
         </div>
       )}
       <div className="mb-4">
@@ -341,7 +377,9 @@ const PaymentsTable: React.FC = () => {
           Delete Selected
         </button>
         {selectedIds.length > 0 && (
-          <span className="text-sm text-gray-600 ml-2">{selectedIds.length} selected</span>
+          <span className="text-sm text-gray-600 ml-2">
+            {selectedIds.length} selected
+          </span>
         )}
       </div>
       <div className="flex flex-col sm:flex-row gap-2 mb-4">
@@ -349,7 +387,7 @@ const PaymentsTable: React.FC = () => {
           type="text"
           placeholder="Search payments..."
           value={search}
-          onChange={e => setSearch(e.target.value)}
+          onChange={(e) => setSearch(e.target.value)}
           className="w-full max-w-xs px-3 py-2 border rounded shadow-sm focus:outline-none focus:ring"
         />
         <select
@@ -358,8 +396,10 @@ const PaymentsTable: React.FC = () => {
           className="w-full max-w-xs px-3 py-2 border rounded shadow-sm focus:outline-none focus:ring"
         >
           <option value="">All Methods</option>
-          {methodOptions.map(method => (
-            <option key={method} value={method}>{method}</option>
+          {methodOptions.map((method) => (
+            <option key={method} value={method}>
+              {method}
+            </option>
           ))}
         </select>
       </div>
@@ -379,7 +419,7 @@ const PaymentsTable: React.FC = () => {
           >
             Previous
           </button>
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
             <button
               key={page}
               className={`px-3 py-1 border rounded mx-1 ${page === currentPage ? 'bg-blue-100 font-bold' : ''}`}
@@ -404,8 +444,10 @@ const PaymentsTable: React.FC = () => {
             onChange={handleRowsPerPageChange}
             className="border rounded px-2 py-1"
           >
-            {[5, 10, 20, 50].map(n => (
-              <option key={n} value={n}>{n}</option>
+            {[5, 10, 20, 50].map((n) => (
+              <option key={n} value={n}>
+                {n}
+              </option>
             ))}
           </select>
         </div>
@@ -418,12 +460,18 @@ const PaymentsTable: React.FC = () => {
       {/* View Details Modal */}
       <Modal
         open={viewModalOpen}
-        onClose={() => { setViewModalOpen(false); setPaymentToView(null); }}
+        onClose={() => {
+          setViewModalOpen(false);
+          setPaymentToView(null);
+        }}
         title="Payment Details"
         actions={
           <button
             className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300"
-            onClick={() => { setViewModalOpen(false); setPaymentToView(null); }}
+            onClick={() => {
+              setViewModalOpen(false);
+              setPaymentToView(null);
+            }}
           >
             Close
           </button>
@@ -431,41 +479,88 @@ const PaymentsTable: React.FC = () => {
       >
         {paymentToView ? (
           <div className="space-y-2">
-            <div><span className="font-semibold">Payment ID:</span> {paymentToView.id}
+            <div>
+              <span className="font-semibold">Payment ID:</span>{' '}
+              {paymentToView.id}
               {paymentToView.pendingSync && (
-                <span className="ml-2 px-2 py-0.5 bg-yellow-400 text-xs rounded">Pending Sync</span>
+                <span className="ml-2 px-2 py-0.5 bg-yellow-400 text-xs rounded">
+                  Pending Sync
+                </span>
               )}
             </div>
-            <div><span className="font-semibold">Order ID:</span> {paymentToView.order_id}</div>
-            <div><span className="font-semibold">Customer Name:</span> {(() => {
-              if (!ordersData || !clientsData) return '—';
-              const order = ordersData.find(o => o.id === paymentToView.order_id);
-              if (!order) return '—';
-              const client = clientsData.find(c => c.id === order.client_id);
-              return client ? client.name : '—';
-            })()}</div>
-            <div><span className="font-semibold">Amount:</span> {paymentToView.amount ? `GHC ${(paymentToView.amount / 100).toFixed(2)}` : 'GHC —'}</div>
-            <div><span className="font-semibold">Method:</span> {paymentToView.method}</div>
+            <div>
+              <span className="font-semibold">Order ID:</span>{' '}
+              {paymentToView.order_id}
+            </div>
+            <div>
+              <span className="font-semibold">Customer Name:</span>{' '}
+              {(() => {
+                if (!ordersData || !clientsData) return '—';
+                const order = ordersData.find(
+                  (o) => o.id === paymentToView.order_id
+                );
+                if (!order) return '—';
+                const client = clientsData.find(
+                  (c) => c.id === order.client_id
+                );
+                return client ? client.name : '—';
+              })()}
+            </div>
+            <div>
+              <span className="font-semibold">Amount:</span>{' '}
+              {paymentToView.amount
+                ? `GHC ${(paymentToView.amount / 100).toFixed(2)}`
+                : 'GHC —'}
+            </div>
+            <div>
+              <span className="font-semibold">Method:</span>{' '}
+              {paymentToView.method}
+            </div>
             {/* Show Payment Type if present */}
-            <div><span className="font-semibold">Payment Type:</span> {paymentToView.payment_type || '—'}</div>
+            <div>
+              <span className="font-semibold">Payment Type:</span>{' '}
+              {paymentToView.payment_type || '—'}
+            </div>
             {/* Show Payment Balance if present */}
-            <div><span className="font-semibold">Payment Balance:</span> {typeof paymentToView.payment_balance === 'number' ? `GHC ${paymentToView.payment_balance}` : '—'}</div>
-            <div><span className="font-semibold">Status:</span> {paymentToView.status || '—'}</div>
-            <div><span className="font-semibold">Transaction Ref:</span> {paymentToView.transaction_ref || '—'}</div>
-            <div><span className="font-semibold">Created At:</span> {formatDateBritish(paymentToView.created_at)}</div>
+            <div>
+              <span className="font-semibold">Payment Balance:</span>{' '}
+              {typeof paymentToView.payment_balance === 'number'
+                ? `GHC ${paymentToView.payment_balance}`
+                : '—'}
+            </div>
+            <div>
+              <span className="font-semibold">Status:</span>{' '}
+              {paymentToView.status || '—'}
+            </div>
+            <div>
+              <span className="font-semibold">Transaction Ref:</span>{' '}
+              {paymentToView.transaction_ref || '—'}
+            </div>
+            <div>
+              <span className="font-semibold">Created At:</span>{' '}
+              {formatDateBritish(paymentToView.created_at)}
+            </div>
           </div>
         ) : null}
       </Modal>
       {/* Edit Payment Modal */}
       <Modal
         open={editModalOpen}
-        onClose={() => { setEditModalOpen(false); setPaymentToEdit(null); setEditForm({ pendingSync: false }); }}
+        onClose={() => {
+          setEditModalOpen(false);
+          setPaymentToEdit(null);
+          setEditForm({ pendingSync: false });
+        }}
         title="Edit Payment"
         actions={
           <>
             <button
               className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300 mr-2"
-              onClick={() => { setEditModalOpen(false); setPaymentToEdit(null); setEditForm({ pendingSync: false }); }}
+              onClick={() => {
+                setEditModalOpen(false);
+                setPaymentToEdit(null);
+                setEditForm({ pendingSync: false });
+              }}
             >
               Cancel
             </button>
@@ -486,7 +581,9 @@ const PaymentsTable: React.FC = () => {
         {paymentToEdit ? (
           <form
             className="space-y-3"
-            onSubmit={e => { e.preventDefault(); }}
+            onSubmit={(e) => {
+              e.preventDefault();
+            }}
           >
             <div>
               <label className="block font-semibold mb-1">Amount (GHC)</label>
@@ -494,7 +591,9 @@ const PaymentsTable: React.FC = () => {
                 type="number"
                 className="w-full border rounded px-2 py-1"
                 value={editForm.amount ?? ''}
-                onChange={e => setEditForm(f => ({ ...f, amount: Number(e.target.value) }))}
+                onChange={(e) =>
+                  setEditForm((f) => ({ ...f, amount: Number(e.target.value) }))
+                }
               />
             </div>
             <div>
@@ -502,7 +601,9 @@ const PaymentsTable: React.FC = () => {
               <input
                 className="w-full border rounded px-2 py-1"
                 value={editForm.method ?? ''}
-                onChange={e => setEditForm(f => ({ ...f, method: e.target.value }))}
+                onChange={(e) =>
+                  setEditForm((f) => ({ ...f, method: e.target.value }))
+                }
               />
             </div>
             {/* Add more fields as needed */}
@@ -512,13 +613,19 @@ const PaymentsTable: React.FC = () => {
       {/* Add New Payment Modal */}
       <Modal
         open={addModalOpen}
-        onClose={() => { setAddModalOpen(false); setAddForm({ amount: 0, method: '', pendingSync: false }); }}
+        onClose={() => {
+          setAddModalOpen(false);
+          setAddForm({ amount: 0, method: '', pendingSync: false });
+        }}
         title="Add New Payment"
         actions={
           <>
             <button
               className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300 mr-2"
-              onClick={() => { setAddModalOpen(false); setAddForm({ amount: 0, method: '', pendingSync: false }); }}
+              onClick={() => {
+                setAddModalOpen(false);
+                setAddForm({ amount: 0, method: '', pendingSync: false });
+              }}
             >
               Cancel
             </button>
@@ -537,7 +644,9 @@ const PaymentsTable: React.FC = () => {
       >
         <form
           className="space-y-3"
-          onSubmit={e => { e.preventDefault(); }}
+          onSubmit={(e) => {
+            e.preventDefault();
+          }}
         >
           {/* Amount input */}
           <div>
@@ -546,7 +655,9 @@ const PaymentsTable: React.FC = () => {
               type="number"
               className="w-full border rounded px-2 py-1"
               value={addForm.amount ?? ''}
-              onChange={e => setAddForm(f => ({ ...f, amount: Number(e.target.value) }))}
+              onChange={(e) =>
+                setAddForm((f) => ({ ...f, amount: Number(e.target.value) }))
+              }
             />
           </div>
           {/* Order dropdown */}
@@ -555,19 +666,25 @@ const PaymentsTable: React.FC = () => {
             <select
               className="w-full border rounded px-2 py-1"
               value={addForm.order_id ?? ''}
-              onChange={e => setAddForm(f => ({ ...f, order_id: Number(e.target.value) }))}
+              onChange={(e) =>
+                setAddForm((f) => ({ ...f, order_id: Number(e.target.value) }))
+              }
             >
               <option value="">Select an order</option>
-              {ordersData && ordersData.map(order => {
-                // Find the client for this order
-                const client = clientsData ? clientsData.find(c => c.id === order.client_id) : null;
-                return (
-                  <option key={order.id} value={order.id}>
-                    Order #{order.id} - {order.description || order.status || 'No description'}
-                    {client ? ` (Customer: ${client.name})` : ''}
-                  </option>
-                );
-              })}
+              {ordersData &&
+                ordersData.map((order) => {
+                  // Find the client for this order
+                  const client = clientsData
+                    ? clientsData.find((c) => c.id === order.client_id)
+                    : null;
+                  return (
+                    <option key={order.id} value={order.id}>
+                      Order #{order.id} -{' '}
+                      {order.description || order.status || 'No description'}
+                      {client ? ` (Customer: ${client.name})` : ''}
+                    </option>
+                  );
+                })}
             </select>
           </div>
           {/* Method dropdown */}
@@ -576,11 +693,15 @@ const PaymentsTable: React.FC = () => {
             <select
               className="w-full border rounded px-2 py-1"
               value={addForm.method ?? ''}
-              onChange={e => setAddForm(f => ({ ...f, method: e.target.value }))}
+              onChange={(e) =>
+                setAddForm((f) => ({ ...f, method: e.target.value }))
+              }
             >
               <option value="">Select a method</option>
-              {methodOptions.map(method => (
-                <option key={method} value={method}>{method}</option>
+              {methodOptions.map((method) => (
+                <option key={method} value={method}>
+                  {method}
+                </option>
               ))}
             </select>
           </div>
@@ -590,7 +711,9 @@ const PaymentsTable: React.FC = () => {
             <select
               className="w-full border rounded px-2 py-1"
               value={addForm.payment_type ?? ''}
-              onChange={e => setAddForm(f => ({ ...f, payment_type: e.target.value }))}
+              onChange={(e) =>
+                setAddForm((f) => ({ ...f, payment_type: e.target.value }))
+              }
             >
               <option value="">Select payment type</option>
               <option value="Full payment">Full payment</option>
@@ -599,12 +722,19 @@ const PaymentsTable: React.FC = () => {
           </div>
           {/* Payment Balance input */}
           <div>
-            <label className="block font-semibold mb-1">Payment Balance (GHC)</label>
+            <label className="block font-semibold mb-1">
+              Payment Balance (GHC)
+            </label>
             <input
               type="number"
               className="w-full border rounded px-2 py-1"
               value={addForm.payment_balance ?? ''}
-              onChange={e => setAddForm(f => ({ ...f, payment_balance: Number(e.target.value) }))}
+              onChange={(e) =>
+                setAddForm((f) => ({
+                  ...f,
+                  payment_balance: Number(e.target.value),
+                }))
+              }
               placeholder="Enter payment balance"
             />
           </div>
@@ -614,13 +744,19 @@ const PaymentsTable: React.FC = () => {
       {/* Delete Payment Modal */}
       <Modal
         open={deleteModalOpen}
-        onClose={() => { setDeleteModalOpen(false); setPaymentToDelete(null); }}
+        onClose={() => {
+          setDeleteModalOpen(false);
+          setPaymentToDelete(null);
+        }}
         title="Delete Payment"
         actions={
           <>
             <button
               className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300 mr-2"
-              onClick={() => { setDeleteModalOpen(false); setPaymentToDelete(null); }}
+              onClick={() => {
+                setDeleteModalOpen(false);
+                setPaymentToDelete(null);
+              }}
             >
               Cancel
             </button>
@@ -639,13 +775,36 @@ const PaymentsTable: React.FC = () => {
       >
         {paymentToDelete ? (
           <div className="space-y-2">
-            <div><span className="font-semibold">Payment ID:</span> {paymentToDelete.id}</div>
-            <div><span className="font-semibold">Order ID:</span> {paymentToDelete.order_id}</div>
-            <div><span className="font-semibold">Amount:</span> {paymentToDelete.amount ? `GHC ${(paymentToDelete.amount / 100).toFixed(2)}` : 'GHC —'}</div>
-            <div><span className="font-semibold">Method:</span> {paymentToDelete.method}</div>
-            <div><span className="font-semibold">Status:</span> {paymentToDelete.status || '—'}</div>
-            <div><span className="font-semibold">Transaction Ref:</span> {paymentToDelete.transaction_ref || '—'}</div>
-            <div><span className="font-semibold">Created At:</span> {formatDateBritish(paymentToDelete.created_at)}</div>
+            <div>
+              <span className="font-semibold">Payment ID:</span>{' '}
+              {paymentToDelete.id}
+            </div>
+            <div>
+              <span className="font-semibold">Order ID:</span>{' '}
+              {paymentToDelete.order_id}
+            </div>
+            <div>
+              <span className="font-semibold">Amount:</span>{' '}
+              {paymentToDelete.amount
+                ? `GHC ${(paymentToDelete.amount / 100).toFixed(2)}`
+                : 'GHC —'}
+            </div>
+            <div>
+              <span className="font-semibold">Method:</span>{' '}
+              {paymentToDelete.method}
+            </div>
+            <div>
+              <span className="font-semibold">Status:</span>{' '}
+              {paymentToDelete.status || '—'}
+            </div>
+            <div>
+              <span className="font-semibold">Transaction Ref:</span>{' '}
+              {paymentToDelete.transaction_ref || '—'}
+            </div>
+            <div>
+              <span className="font-semibold">Created At:</span>{' '}
+              {formatDateBritish(paymentToDelete.created_at)}
+            </div>
           </div>
         ) : null}
       </Modal>
@@ -665,7 +824,9 @@ const PaymentsTable: React.FC = () => {
             <button
               className="px-4 py-2 rounded bg-red-600 text-white hover:bg-red-700"
               onClick={() => {
-                toast.success(`${selectedIds.length} payment(s) deleted successfully!`);
+                toast.success(
+                  `${selectedIds.length} payment(s) deleted successfully!`
+                );
                 setBulkDeleteModalOpen(false);
                 setSelectedIds([]);
               }}
@@ -676,11 +837,13 @@ const PaymentsTable: React.FC = () => {
         }
       >
         <div className="py-4 text-center">
-          Are you sure you want to delete <span className="font-semibold">{selectedIds.length}</span> selected payment(s)?
+          Are you sure you want to delete{' '}
+          <span className="font-semibold">{selectedIds.length}</span> selected
+          payment(s)?
         </div>
       </Modal>
     </div>
   );
 };
 
-export default PaymentsTable; 
+export default PaymentsTable;

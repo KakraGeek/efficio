@@ -30,11 +30,15 @@ const columns: Column<InventoryRow>[] = [
   { accessor: 'category', header: 'Category', render: (value) => value || '-' },
   { accessor: 'quantity', header: 'Quantity', render: (value) => value ?? '-' },
   { accessor: 'unit', header: 'Unit', render: (value) => value || '-' },
-  { accessor: 'low_stock_alert', header: 'Low Stock Alert', render: (value) => value ?? '-' },
+  {
+    accessor: 'low_stock_alert',
+    header: 'Low Stock Alert',
+    render: (value) => value ?? '-',
+  },
   {
     accessor: 'created_at',
     header: 'Created At',
-    render: (value) => value ? formatDateBritish(value) : '-',
+    render: (value) => (value ? formatDateBritish(value) : '-'),
   },
   {
     accessor: 'renderActions',
@@ -47,7 +51,9 @@ const defaultSort: SortState<InventoryRow> = { column: null, direction: 'asc' };
 const defaultRowsPerPage = 10;
 
 // Helper type guard to check if a value is a key of InventoryItem
-function isInventoryItemKey(key: string | number | symbol): key is keyof InventoryItem {
+function isInventoryItemKey(
+  key: string | number | symbol
+): key is keyof InventoryItem {
   return [
     'id',
     'user_id',
@@ -82,7 +88,7 @@ const InventoryTable: React.FC = () => {
     },
     onError: (error: any) => {
       toast.error(`Error creating item: ${error.message}`);
-    }
+    },
   });
   const updateInventoryItem = trpc.updateInventoryItem.useMutation({
     onSuccess: () => {
@@ -91,7 +97,7 @@ const InventoryTable: React.FC = () => {
     },
     onError: (error: any) => {
       toast.error(`Error updating item: ${error.message}`);
-    }
+    },
   });
   const deleteInventoryItem = trpc.deleteInventoryItem.useMutation({
     onSuccess: () => {
@@ -100,7 +106,7 @@ const InventoryTable: React.FC = () => {
     },
     onError: (error: any) => {
       toast.error(`Error deleting item: ${error.message}`);
-    }
+    },
   });
   const bulkDeleteInventory = trpc.bulkDeleteInventory.useMutation({
     onSuccess: () => {
@@ -109,10 +115,11 @@ const InventoryTable: React.FC = () => {
     },
     onError: (error: any) => {
       toast.error(`Error deleting items: ${error.message}`);
-    }
+    },
   });
   console.log('InventoryTable data:', data);
-  const [sortState, setSortState] = useState<SortState<InventoryRow>>(defaultSort);
+  const [sortState, setSortState] =
+    useState<SortState<InventoryRow>>(defaultSort);
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -127,13 +134,23 @@ const InventoryTable: React.FC = () => {
   // Edit modal state
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [itemToEdit, setItemToEdit] = useState<InventoryItem | null>(null);
-  const [editForm, setEditForm] = useState<Partial<InventoryItem>>({ pendingSync: false });
+  const [editForm, setEditForm] = useState<Partial<InventoryItem>>({
+    pendingSync: false,
+  });
   // Add new modal state
   const [addModalOpen, setAddModalOpen] = useState(false);
-  const [addForm, setAddForm] = useState<Partial<InventoryItem>>({ name: '', category: '', quantity: 0, unit: '', low_stock_alert: undefined, pendingSync: false });
+  const [addForm, setAddForm] = useState<Partial<InventoryItem>>({
+    name: '',
+    category: '',
+    quantity: 0,
+    unit: '',
+    low_stock_alert: undefined,
+    pendingSync: false,
+  });
   // Mark as Low Stock modal state
   const [lowStockModalOpen, setLowStockModalOpen] = useState(false);
-  const [itemToMarkLowStock, setItemToMarkLowStock] = useState<InventoryItem | null>(null);
+  const [itemToMarkLowStock, setItemToMarkLowStock] =
+    useState<InventoryItem | null>(null);
   // Feedback modal state
   const [feedbackModalOpen, setFeedbackModalOpen] = useState(false);
   const [feedbackMessage, setFeedbackMessage] = useState('');
@@ -146,7 +163,7 @@ const InventoryTable: React.FC = () => {
   const categoryOptions = useMemo(() => {
     if (!data) return [];
     const set = new Set<string>();
-    data.forEach(row => {
+    data.forEach((row) => {
       if (row.category) set.add(row.category);
     });
     return Array.from(set);
@@ -157,14 +174,16 @@ const InventoryTable: React.FC = () => {
     if (!data) return [];
     let filtered = data;
     if (categoryFilter) {
-      filtered = filtered.filter(row => row.category === categoryFilter);
+      filtered = filtered.filter((row) => row.category === categoryFilter);
     }
     if (search.trim()) {
       const term = search.trim().toLowerCase();
-      filtered = filtered.filter(row => {
+      filtered = filtered.filter((row) => {
         // Only use columns whose accessor is a key of InventoryItem
-        const filterableColumns = columns.filter(col => isInventoryItemKey(col.accessor)) as Column<InventoryItem>[];
-        return filterableColumns.some(col => {
+        const filterableColumns = columns.filter((col) =>
+          isInventoryItemKey(col.accessor)
+        ) as Column<InventoryItem>[];
+        return filterableColumns.some((col) => {
           const key = col.accessor as keyof InventoryItem;
           const value = row[key];
           if (value === null || value === undefined) return false;
@@ -179,7 +198,8 @@ const InventoryTable: React.FC = () => {
   const sortedData: InventoryItem[] = useMemo(() => {
     if (!filteredData) return [];
     // Prevent sorting on the Actions column
-    if (!sortState.column || sortState.column === 'renderActions') return filteredData;
+    if (!sortState.column || sortState.column === 'renderActions')
+      return filteredData;
     const sorted = [...filteredData].sort((a, b) => {
       const aValue = a[sortState.column as keyof InventoryItem];
       const bValue = b[sortState.column as keyof InventoryItem];
@@ -187,7 +207,9 @@ const InventoryTable: React.FC = () => {
       if (aValue === null || aValue === undefined) return 1;
       if (bValue === null || bValue === undefined) return -1;
       if (typeof aValue === 'number' && typeof bValue === 'number') {
-        return sortState.direction === 'asc' ? aValue - bValue : bValue - aValue;
+        return sortState.direction === 'asc'
+          ? aValue - bValue
+          : bValue - aValue;
       }
       return sortState.direction === 'asc'
         ? String(aValue).localeCompare(String(bValue))
@@ -205,18 +227,18 @@ const InventoryTable: React.FC = () => {
   }, [sortedData, currentPage, rowsPerPage]);
 
   // Only add renderActions after all filtering, sorting, and pagination
-  const paginatedDataWithActions: InventoryRow[] = paginatedData.map(row => ({
+  const paginatedDataWithActions: InventoryRow[] = paginatedData.map((row) => ({
     ...row,
     renderActions: () => (
       <div className="flex gap-2">
         <input
           type="checkbox"
           checked={selectedIds.includes(row.id)}
-          onChange={e => {
+          onChange={(e) => {
             if (e.target.checked) {
-              setSelectedIds(ids => [...ids, row.id]);
+              setSelectedIds((ids) => [...ids, row.id]);
             } else {
-              setSelectedIds(ids => ids.filter(id => id !== row.id));
+              setSelectedIds((ids) => ids.filter((id) => id !== row.id));
             }
           }}
           className="mr-2 align-middle"
@@ -262,7 +284,9 @@ const InventoryTable: React.FC = () => {
           Delete
         </button>
         {row.pendingSync && (
-          <span className="ml-2 px-2 py-0.5 bg-yellow-400 text-xs rounded">Pending Sync</span>
+          <span className="ml-2 px-2 py-0.5 bg-yellow-400 text-xs rounded">
+            Pending Sync
+          </span>
         )}
       </div>
     ),
@@ -277,14 +301,37 @@ const InventoryTable: React.FC = () => {
           type="checkbox"
           className="align-middle"
           aria-label="Select all"
-          checked={paginatedDataWithActions.length > 0 && paginatedDataWithActions.every(row => selectedIds.includes(row.id))}
+          checked={
+            paginatedDataWithActions.length > 0 &&
+            paginatedDataWithActions.every((row) =>
+              selectedIds.includes(row.id)
+            )
+          }
           // @ts-ignore: indeterminate is not a standard prop, but can be set via ref if needed
-          indeterminate={paginatedDataWithActions.some(row => selectedIds.includes(row.id)) && !paginatedDataWithActions.every(row => selectedIds.includes(row.id))}
-          onChange={e => {
+          indeterminate={
+            paginatedDataWithActions.some((row) =>
+              selectedIds.includes(row.id)
+            ) &&
+            !paginatedDataWithActions.every((row) =>
+              selectedIds.includes(row.id)
+            )
+          }
+          onChange={(e) => {
             if (e.target.checked) {
-              setSelectedIds(ids => Array.from(new Set([...ids, ...paginatedDataWithActions.map(row => row.id)])));
+              setSelectedIds((ids) =>
+                Array.from(
+                  new Set([
+                    ...ids,
+                    ...paginatedDataWithActions.map((row) => row.id),
+                  ])
+                )
+              );
             } else {
-              setSelectedIds(ids => ids.filter(id => !paginatedDataWithActions.some(row => row.id === id)));
+              setSelectedIds((ids) =>
+                ids.filter(
+                  (id) => !paginatedDataWithActions.some((row) => row.id === id)
+                )
+              );
             }
           }}
         />
@@ -293,11 +340,11 @@ const InventoryTable: React.FC = () => {
         <input
           type="checkbox"
           checked={selectedIds.includes(row.id)}
-          onChange={e => {
+          onChange={(e) => {
             if (e.target.checked) {
-              setSelectedIds(ids => [...ids, row.id]);
+              setSelectedIds((ids) => [...ids, row.id]);
             } else {
-              setSelectedIds(ids => ids.filter(id => id !== row.id));
+              setSelectedIds((ids) => ids.filter((id) => id !== row.id));
             }
           }}
           className="align-middle"
@@ -305,11 +352,13 @@ const InventoryTable: React.FC = () => {
         />
       ),
     },
-    ...columns.filter(col => col.accessor !== 'renderActions'),
+    ...columns.filter((col) => col.accessor !== 'renderActions'),
     // Add the renderActions column back with a valid accessor
     {
       accessor: 'renderActions',
-      header: columns.find(col => col.accessor === 'renderActions')?.header ?? 'Actions',
+      header:
+        columns.find((col) => col.accessor === 'renderActions')?.header ??
+        'Actions',
       render: (_value, row) => (
         <div className="flex gap-2">
           <button
@@ -331,17 +380,18 @@ const InventoryTable: React.FC = () => {
           >
             Edit
           </button>
-          {row.low_stock_alert !== null && row.quantity < row.low_stock_alert && (
-            <button
-              className="px-3 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600 text-sm"
-              onClick={() => {
-                setItemToMarkLowStock(row);
-                setLowStockModalOpen(true);
-              }}
-            >
-              Mark as Low Stock
-            </button>
-          )}
+          {row.low_stock_alert !== null &&
+            row.quantity < row.low_stock_alert && (
+              <button
+                className="px-3 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600 text-sm"
+                onClick={() => {
+                  setItemToMarkLowStock(row);
+                  setLowStockModalOpen(true);
+                }}
+              >
+                Mark as Low Stock
+              </button>
+            )}
           <button
             className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-sm"
             onClick={() => {
@@ -352,7 +402,9 @@ const InventoryTable: React.FC = () => {
             Delete
           </button>
           {row.pendingSync && (
-            <span className="ml-2 px-2 py-0.5 bg-yellow-400 text-xs rounded">Pending Sync</span>
+            <span className="ml-2 px-2 py-0.5 bg-yellow-400 text-xs rounded">
+              Pending Sync
+            </span>
           )}
         </div>
       ),
@@ -377,7 +429,9 @@ const InventoryTable: React.FC = () => {
     setRowsPerPage(Number(e.target.value));
     setCurrentPage(1); // Reset to first page
   };
-  const handleCategoryFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+  const handleCategoryFilterChange = (
+    e: React.ChangeEvent<HTMLSelectElement>
+  ) => {
     setCategoryFilter(e.target.value);
     setCurrentPage(1);
   };
@@ -396,7 +450,7 @@ const InventoryTable: React.FC = () => {
   }, [search, rowsPerPage, sortState]);
 
   // At the top of InventoryTable, count unsynced items
-  const pendingCount = (data || []).filter(i => i.pendingSync).length;
+  const pendingCount = (data || []).filter((i) => i.pendingSync).length;
 
   if (isLoading) return <div>Loading inventory...</div>;
   if (error) return <div className="text-red-500">Error: {error.message}</div>;
@@ -405,15 +459,26 @@ const InventoryTable: React.FC = () => {
     <div className="p-4">
       {pendingCount > 0 && (
         <div className="mb-2 text-yellow-700 bg-yellow-100 border border-yellow-300 rounded px-3 py-2 flex items-center gap-2">
-          <span className="font-semibold">{pendingCount} item{pendingCount > 1 ? 's' : ''} pending sync</span>
-          <span className="ml-2 px-2 py-0.5 bg-yellow-400 text-xs rounded">Pending Sync</span>
+          <span className="font-semibold">
+            {pendingCount} item{pendingCount > 1 ? 's' : ''} pending sync
+          </span>
+          <span className="ml-2 px-2 py-0.5 bg-yellow-400 text-xs rounded">
+            Pending Sync
+          </span>
         </div>
       )}
       <div className="mb-4 flex gap-2 items-center">
         <button
           className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
           onClick={() => {
-            setAddForm({ name: '', category: '', quantity: 0, unit: '', low_stock_alert: undefined, pendingSync: false });
+            setAddForm({
+              name: '',
+              category: '',
+              quantity: 0,
+              unit: '',
+              low_stock_alert: undefined,
+              pendingSync: false,
+            });
             setAddModalOpen(true);
           }}
         >
@@ -427,7 +492,9 @@ const InventoryTable: React.FC = () => {
           Delete Selected
         </button>
         {selectedIds.length > 0 && (
-          <span className="text-sm text-gray-600">{selectedIds.length} selected</span>
+          <span className="text-sm text-gray-600">
+            {selectedIds.length} selected
+          </span>
         )}
       </div>
       <div className="flex flex-col sm:flex-row gap-2 mb-4">
@@ -435,7 +502,7 @@ const InventoryTable: React.FC = () => {
           type="text"
           placeholder="Search inventory..."
           value={search}
-          onChange={e => setSearch(e.target.value)}
+          onChange={(e) => setSearch(e.target.value)}
           className="w-full max-w-xs px-3 py-2 border rounded shadow-sm focus:outline-none focus:ring"
         />
         <select
@@ -444,8 +511,10 @@ const InventoryTable: React.FC = () => {
           className="w-full max-w-xs px-3 py-2 border rounded shadow-sm focus:outline-none focus:ring"
         >
           <option value="">All Categories</option>
-          {categoryOptions.map(category => (
-            <option key={category} value={category}>{category}</option>
+          {categoryOptions.map((category) => (
+            <option key={category} value={category}>
+              {category}
+            </option>
           ))}
         </select>
       </div>
@@ -465,7 +534,7 @@ const InventoryTable: React.FC = () => {
           >
             Previous
           </button>
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
             <button
               key={page}
               className={`px-3 py-1 border rounded mx-1 ${page === currentPage ? 'bg-blue-100 font-bold' : ''}`}
@@ -490,8 +559,10 @@ const InventoryTable: React.FC = () => {
             onChange={handleRowsPerPageChange}
             className="border rounded px-2 py-1"
           >
-            {[5, 10, 20, 50].map(n => (
-              <option key={n} value={n}>{n}</option>
+            {[5, 10, 20, 50].map((n) => (
+              <option key={n} value={n}>
+                {n}
+              </option>
             ))}
           </select>
         </div>
@@ -504,13 +575,19 @@ const InventoryTable: React.FC = () => {
       {/* Delete Confirmation Modal */}
       <Modal
         open={modalOpen}
-        onClose={() => { setModalOpen(false); setItemToDelete(null); }}
+        onClose={() => {
+          setModalOpen(false);
+          setItemToDelete(null);
+        }}
         title="Confirm Delete"
         actions={
           <>
             <button
               className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300 mr-2"
-              onClick={() => { setModalOpen(false); setItemToDelete(null); }}
+              onClick={() => {
+                setModalOpen(false);
+                setItemToDelete(null);
+              }}
             >
               Cancel
             </button>
@@ -524,18 +601,27 @@ const InventoryTable: React.FC = () => {
         }
       >
         {itemToDelete ? (
-          <p>Are you sure you want to delete <span className="font-semibold">{itemToDelete.name}</span>?</p>
+          <p>
+            Are you sure you want to delete{' '}
+            <span className="font-semibold">{itemToDelete.name}</span>?
+          </p>
         ) : null}
       </Modal>
       {/* View Details Modal */}
       <Modal
         open={viewModalOpen}
-        onClose={() => { setViewModalOpen(false); setItemToView(null); }}
+        onClose={() => {
+          setViewModalOpen(false);
+          setItemToView(null);
+        }}
         title="Inventory Item Details"
         actions={
           <button
             className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300"
-            onClick={() => { setViewModalOpen(false); setItemToView(null); }}
+            onClick={() => {
+              setViewModalOpen(false);
+              setItemToView(null);
+            }}
           >
             Close
           </button>
@@ -543,15 +629,37 @@ const InventoryTable: React.FC = () => {
       >
         {itemToView ? (
           <div className="space-y-2">
-            <div><span className="font-semibold">Name:</span> {itemToView.name}</div>
-            <div><span className="font-semibold">Category:</span> {itemToView.category || '—'}</div>
-            <div><span className="font-semibold">Quantity:</span> {itemToView.quantity}</div>
-            <div><span className="font-semibold">Unit:</span> {itemToView.unit || '—'}</div>
-            <div><span className="font-semibold">Low Stock Alert:</span> {itemToView.low_stock_alert ?? '—'}</div>
-            <div><span className="font-semibold">Created At:</span> {formatDateBritish(itemToView.created_at)}</div>
-            <div><span className="font-semibold">Last Updated:</span> {formatDateBritish(itemToView.updated_at)}</div>
+            <div>
+              <span className="font-semibold">Name:</span> {itemToView.name}
+            </div>
+            <div>
+              <span className="font-semibold">Category:</span>{' '}
+              {itemToView.category || '—'}
+            </div>
+            <div>
+              <span className="font-semibold">Quantity:</span>{' '}
+              {itemToView.quantity}
+            </div>
+            <div>
+              <span className="font-semibold">Unit:</span>{' '}
+              {itemToView.unit || '—'}
+            </div>
+            <div>
+              <span className="font-semibold">Low Stock Alert:</span>{' '}
+              {itemToView.low_stock_alert ?? '—'}
+            </div>
+            <div>
+              <span className="font-semibold">Created At:</span>{' '}
+              {formatDateBritish(itemToView.created_at)}
+            </div>
+            <div>
+              <span className="font-semibold">Last Updated:</span>{' '}
+              {formatDateBritish(itemToView.updated_at)}
+            </div>
             {itemToView.pendingSync && (
-              <span className="ml-2 px-2 py-0.5 bg-yellow-400 text-xs rounded">Pending Sync</span>
+              <span className="ml-2 px-2 py-0.5 bg-yellow-400 text-xs rounded">
+                Pending Sync
+              </span>
             )}
           </div>
         ) : null}
@@ -559,13 +667,21 @@ const InventoryTable: React.FC = () => {
       {/* Edit Item Modal */}
       <Modal
         open={editModalOpen}
-        onClose={() => { setEditModalOpen(false); setItemToEdit(null); setEditForm({ pendingSync: false }); }}
+        onClose={() => {
+          setEditModalOpen(false);
+          setItemToEdit(null);
+          setEditForm({ pendingSync: false });
+        }}
         title="Edit Inventory Item"
         actions={
           <>
             <button
               className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300 mr-2"
-              onClick={() => { setEditModalOpen(false); setItemToEdit(null); setEditForm({ pendingSync: false }); }}
+              onClick={() => {
+                setEditModalOpen(false);
+                setItemToEdit(null);
+                setEditForm({ pendingSync: false });
+              }}
             >
               Cancel
             </button>
@@ -586,14 +702,18 @@ const InventoryTable: React.FC = () => {
         {itemToEdit ? (
           <form
             className="space-y-3"
-            onSubmit={e => { e.preventDefault(); }}
+            onSubmit={(e) => {
+              e.preventDefault();
+            }}
           >
             <div>
               <label className="block font-semibold mb-1">Name</label>
               <input
                 className="w-full border rounded px-2 py-1"
                 value={editForm.name ?? ''}
-                onChange={e => setEditForm(f => ({ ...f, name: e.target.value }))}
+                onChange={(e) =>
+                  setEditForm((f) => ({ ...f, name: e.target.value }))
+                }
               />
             </div>
             <div>
@@ -601,7 +721,9 @@ const InventoryTable: React.FC = () => {
               <input
                 className="w-full border rounded px-2 py-1"
                 value={editForm.category ?? ''}
-                onChange={e => setEditForm(f => ({ ...f, category: e.target.value }))}
+                onChange={(e) =>
+                  setEditForm((f) => ({ ...f, category: e.target.value }))
+                }
               />
             </div>
             <div>
@@ -610,7 +732,12 @@ const InventoryTable: React.FC = () => {
                 type="number"
                 className="w-full border rounded px-2 py-1"
                 value={editForm.quantity ?? ''}
-                onChange={e => setEditForm(f => ({ ...f, quantity: Number(e.target.value) }))}
+                onChange={(e) =>
+                  setEditForm((f) => ({
+                    ...f,
+                    quantity: Number(e.target.value),
+                  }))
+                }
               />
             </div>
             <div>
@@ -618,16 +745,25 @@ const InventoryTable: React.FC = () => {
               <input
                 className="w-full border rounded px-2 py-1"
                 value={editForm.unit ?? ''}
-                onChange={e => setEditForm(f => ({ ...f, unit: e.target.value }))}
+                onChange={(e) =>
+                  setEditForm((f) => ({ ...f, unit: e.target.value }))
+                }
               />
             </div>
             <div>
-              <label className="block font-semibold mb-1">Low Stock Alert</label>
+              <label className="block font-semibold mb-1">
+                Low Stock Alert
+              </label>
               <input
                 type="number"
                 className="w-full border rounded px-2 py-1"
                 value={editForm.low_stock_alert ?? ''}
-                onChange={e => setEditForm(f => ({ ...f, low_stock_alert: Number(e.target.value) }))}
+                onChange={(e) =>
+                  setEditForm((f) => ({
+                    ...f,
+                    low_stock_alert: Number(e.target.value),
+                  }))
+                }
               />
             </div>
           </form>
@@ -636,13 +772,33 @@ const InventoryTable: React.FC = () => {
       {/* Add New Item Modal */}
       <Modal
         open={addModalOpen}
-        onClose={() => { setAddModalOpen(false); setAddForm({ name: '', category: '', quantity: 0, unit: '', low_stock_alert: undefined, pendingSync: false }); }}
+        onClose={() => {
+          setAddModalOpen(false);
+          setAddForm({
+            name: '',
+            category: '',
+            quantity: 0,
+            unit: '',
+            low_stock_alert: undefined,
+            pendingSync: false,
+          });
+        }}
         title="Add New Inventory Item"
         actions={
           <>
             <button
               className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300 mr-2"
-              onClick={() => { setAddModalOpen(false); setAddForm({ name: '', category: '', quantity: 0, unit: '', low_stock_alert: undefined, pendingSync: false }); }}
+              onClick={() => {
+                setAddModalOpen(false);
+                setAddForm({
+                  name: '',
+                  category: '',
+                  quantity: 0,
+                  unit: '',
+                  low_stock_alert: undefined,
+                  pendingSync: false,
+                });
+              }}
             >
               Cancel
             </button>
@@ -651,7 +807,14 @@ const InventoryTable: React.FC = () => {
               onClick={() => {
                 toast.success(`Item '${addForm.name}' added successfully!`);
                 setAddModalOpen(false);
-                setAddForm({ name: '', category: '', quantity: 0, unit: '', low_stock_alert: undefined, pendingSync: false });
+                setAddForm({
+                  name: '',
+                  category: '',
+                  quantity: 0,
+                  unit: '',
+                  low_stock_alert: undefined,
+                  pendingSync: false,
+                });
               }}
             >
               Add
@@ -661,14 +824,18 @@ const InventoryTable: React.FC = () => {
       >
         <form
           className="space-y-3"
-          onSubmit={e => { e.preventDefault(); }}
+          onSubmit={(e) => {
+            e.preventDefault();
+          }}
         >
           <div>
             <label className="block font-semibold mb-1">Name</label>
             <input
               className="w-full border rounded px-2 py-1"
               value={addForm.name ?? ''}
-              onChange={e => setAddForm(f => ({ ...f, name: e.target.value }))}
+              onChange={(e) =>
+                setAddForm((f) => ({ ...f, name: e.target.value }))
+              }
             />
           </div>
           <div>
@@ -676,7 +843,9 @@ const InventoryTable: React.FC = () => {
             <input
               className="w-full border rounded px-2 py-1"
               value={addForm.category ?? ''}
-              onChange={e => setAddForm(f => ({ ...f, category: e.target.value }))}
+              onChange={(e) =>
+                setAddForm((f) => ({ ...f, category: e.target.value }))
+              }
             />
           </div>
           <div>
@@ -685,7 +854,9 @@ const InventoryTable: React.FC = () => {
               type="number"
               className="w-full border rounded px-2 py-1"
               value={addForm.quantity ?? ''}
-              onChange={e => setAddForm(f => ({ ...f, quantity: Number(e.target.value) }))}
+              onChange={(e) =>
+                setAddForm((f) => ({ ...f, quantity: Number(e.target.value) }))
+              }
             />
           </div>
           <div>
@@ -693,7 +864,9 @@ const InventoryTable: React.FC = () => {
             <input
               className="w-full border rounded px-2 py-1"
               value={addForm.unit ?? ''}
-              onChange={e => setAddForm(f => ({ ...f, unit: e.target.value }))}
+              onChange={(e) =>
+                setAddForm((f) => ({ ...f, unit: e.target.value }))
+              }
             />
           </div>
           <div>
@@ -702,7 +875,12 @@ const InventoryTable: React.FC = () => {
               type="number"
               className="w-full border rounded px-2 py-1"
               value={addForm.low_stock_alert ?? ''}
-              onChange={e => setAddForm(f => ({ ...f, low_stock_alert: Number(e.target.value) }))}
+              onChange={(e) =>
+                setAddForm((f) => ({
+                  ...f,
+                  low_stock_alert: Number(e.target.value),
+                }))
+              }
             />
           </div>
         </form>
@@ -710,20 +888,28 @@ const InventoryTable: React.FC = () => {
       {/* Mark as Low Stock Modal */}
       <Modal
         open={lowStockModalOpen}
-        onClose={() => { setLowStockModalOpen(false); setItemToMarkLowStock(null); }}
+        onClose={() => {
+          setLowStockModalOpen(false);
+          setItemToMarkLowStock(null);
+        }}
         title="Mark as Low Stock"
         actions={
           <>
             <button
               className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300 mr-2"
-              onClick={() => { setLowStockModalOpen(false); setItemToMarkLowStock(null); }}
+              onClick={() => {
+                setLowStockModalOpen(false);
+                setItemToMarkLowStock(null);
+              }}
             >
               Cancel
             </button>
             <button
               className="px-4 py-2 rounded bg-yellow-500 text-white hover:bg-yellow-600"
               onClick={() => {
-                toast.success(`Item '${itemToMarkLowStock?.name}' marked as low stock!`);
+                toast.success(
+                  `Item '${itemToMarkLowStock?.name}' marked as low stock!`
+                );
                 setLowStockModalOpen(false);
                 setItemToMarkLowStock(null);
               }}
@@ -734,7 +920,11 @@ const InventoryTable: React.FC = () => {
         }
       >
         {itemToMarkLowStock ? (
-          <p>Are you sure you want to mark <span className="font-semibold">{itemToMarkLowStock.name}</span> as low stock?</p>
+          <p>
+            Are you sure you want to mark{' '}
+            <span className="font-semibold">{itemToMarkLowStock.name}</span> as
+            low stock?
+          </p>
         ) : null}
       </Modal>
       {/* Feedback Modal */}
@@ -751,7 +941,9 @@ const InventoryTable: React.FC = () => {
           </button>
         }
       >
-        <div className="text-green-700 font-semibold text-center py-4">{feedbackMessage}</div>
+        <div className="text-green-700 font-semibold text-center py-4">
+          {feedbackMessage}
+        </div>
       </Modal>
       {/* Bulk Delete Modal */}
       <Modal
@@ -769,7 +961,9 @@ const InventoryTable: React.FC = () => {
             <button
               className="px-4 py-2 rounded bg-red-600 text-white hover:bg-red-700"
               onClick={() => {
-                toast.success(`${selectedIds.length} item(s) deleted successfully!`);
+                toast.success(
+                  `${selectedIds.length} item(s) deleted successfully!`
+                );
                 setBulkDeleteModalOpen(false);
                 setSelectedIds([]);
               }}
@@ -780,11 +974,13 @@ const InventoryTable: React.FC = () => {
         }
       >
         <div className="py-4 text-center">
-          Are you sure you want to delete <span className="font-semibold">{selectedIds.length}</span> selected item(s)?
+          Are you sure you want to delete{' '}
+          <span className="font-semibold">{selectedIds.length}</span> selected
+          item(s)?
         </div>
       </Modal>
     </div>
   );
 };
 
-export default InventoryTable; 
+export default InventoryTable;

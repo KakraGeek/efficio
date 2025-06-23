@@ -7,4 +7,4 @@ export default function InventoryPage() {
       <InventoryTable />
     </div>
   );
-} 
+}

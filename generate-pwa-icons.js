@@ -32,4 +32,4 @@ if (!fs.existsSync('public')) {
 }
 
 createIcon(192, 'icon-192x192.png');
-createIcon(512, 'icon-512x512.png'); 
+createIcon(512, 'icon-512x512.png');

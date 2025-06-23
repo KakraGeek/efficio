@@ -1,6 +1,6 @@
-import React from "react";
-import NavBar from "./NavBar"; // Sidebar NavBar
-import BottomNav from "./BottomNav"; // Bottom navigation for mobile
+import React from 'react';
+import NavBar from './NavBar'; // Sidebar NavBar
+import BottomNav from './BottomNav'; // Bottom navigation for mobile
 import { UserButton, SignedIn } from '@clerk/nextjs';
 
 // Layout component wraps all page content and provides consistent structure
@@ -19,9 +19,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
             <UserButton afterSignOutUrl="/" />
           </SignedIn>
         </div>
-        <main className="flex-1">
-          {children}
-        </main>
+        <main className="flex-1">{children}</main>
         {/* Footer section */}
         <footer className="bg-white shadow p-4 text-center text-sm text-gray-500">
           &copy; {new Date().getFullYear()} Efficio
@@ -33,4 +31,4 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
-export default Layout; 
+export default Layout;

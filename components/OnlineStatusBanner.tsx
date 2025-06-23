@@ -2,4 +2,4 @@
 // because the online/offline detection was unreliable and not needed.
 // If you want to add it back in the future, you can restore this file.
 
-// (Component intentionally left blank) 
+// (Component intentionally left blank)

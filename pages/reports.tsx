@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
-import { ArrowDownTrayIcon, DocumentTextIcon } from '@heroicons/react/24/outline';
+import {
+  ArrowDownTrayIcon,
+  DocumentTextIcon,
+} from '@heroicons/react/24/outline';
 import { trpc } from '../utils/trpc';
 import toast from 'react-hot-toast';
 
@@ -29,7 +32,11 @@ const inventoryReports = [
 function exportCSV(data: any[], columns: any[], filename: string) {
   try {
     const csv = [columns.map((c: any) => c.header).join(',')]
-      .concat(data.map((row: any) => columns.map((c: any) => row[c.accessor]).join(',')))
+      .concat(
+        data.map((row: any) =>
+          columns.map((c: any) => row[c.accessor]).join(',')
+        )
+      )
       .join('\n');
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
@@ -51,14 +58,21 @@ async function exportPDF(data: any[], columns: any[], filename: string) {
 
     const doc = new jsPDFModule.jsPDF();
     const headers = [columns.map((c: any) => c.header)];
-    const rows = data.map((row: any) => columns.map((c: any) => {
-      if (c.accessor === 'total_price' || c.accessor === 'paid' || c.accessor === 'outstanding' || c.accessor === 'amount') {
-        return row[c.accessor] !== undefined && row[c.accessor] !== null
-          ? `₵${(row[c.accessor] / 100).toLocaleString()}`
-          : '';
-      }
-      return row[c.accessor];
-    }));
+    const rows = data.map((row: any) =>
+      columns.map((c: any) => {
+        if (
+          c.accessor === 'total_price' ||
+          c.accessor === 'paid' ||
+          c.accessor === 'outstanding' ||
+          c.accessor === 'amount'
+        ) {
+          return row[c.accessor] !== undefined && row[c.accessor] !== null
+            ? `₵${(row[c.accessor] / 100).toLocaleString()}`
+            : '';
+        }
+        return row[c.accessor];
+      })
+    );
 
     autoTable(doc, { head: headers, body: rows });
     doc.save(filename.replace('.csv', '.pdf'));
@@ -90,16 +104,31 @@ export default function ReportsPage() {
   const [inventoryReport, setInventoryReport] = useState('');
 
   // Export format state
-  const [clientExportFormat, setClientExportFormat] = useState<'csv' | 'pdf'>('csv');
-  const [orderExportFormat, setOrderExportFormat] = useState<'csv' | 'pdf'>('csv');
-  const [paymentExportFormat, setPaymentExportFormat] = useState<'csv' | 'pdf'>('csv');
-  const [inventoryExportFormat, setInventoryExportFormat] = useState<'csv' | 'pdf'>('csv');
+  const [clientExportFormat, setClientExportFormat] = useState<'csv' | 'pdf'>(
+    'csv'
+  );
+  const [orderExportFormat, setOrderExportFormat] = useState<'csv' | 'pdf'>(
+    'csv'
+  );
+  const [paymentExportFormat, setPaymentExportFormat] = useState<'csv' | 'pdf'>(
+    'csv'
+  );
+  const [inventoryExportFormat, setInventoryExportFormat] = useState<
+    'csv' | 'pdf'
+  >('csv');
 
-  if (clients.isLoading || orders.isLoading || payments.isLoading || inventory.isLoading) {
+  if (
+    clients.isLoading ||
+    orders.isLoading ||
+    payments.isLoading ||
+    inventory.isLoading
+  ) {
     return <div className="p-8 text-center">Loading reports...</div>;
   }
   if (clients.error || orders.error || payments.error || inventory.error) {
-    return <div className="p-8 text-center text-red-500">Error loading reports.</div>;
+    return (
+      <div className="p-8 text-center text-red-500">Error loading reports.</div>
+    );
   }
 
   // --- Clients Report Data ---
@@ -108,9 +137,11 @@ export default function ReportsPage() {
     clientData = clients.data || [];
   } else if (clientReport === 'new') {
     const now = new Date();
-    clientData = (clients.data || []).filter(c => {
+    clientData = (clients.data || []).filter((c) => {
       const d = new Date(c.created_at);
-      return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+      return (
+        d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth()
+      );
     });
   }
   const clientColumns = [
@@ -126,11 +157,17 @@ export default function ReportsPage() {
   if (orderReport === 'all') {
     orderData = orders.data || [];
   } else if (orderReport === 'pending') {
-    orderData = (orders.data || []).filter(o => o.status.toLowerCase().includes('pending'));
+    orderData = (orders.data || []).filter((o) =>
+      o.status.toLowerCase().includes('pending')
+    );
   } else if (orderReport === 'completed') {
-    orderData = (orders.data || []).filter(o => o.status.toLowerCase().includes('complete'));
+    orderData = (orders.data || []).filter((o) =>
+      o.status.toLowerCase().includes('complete')
+    );
   } else if (orderReport === 'extended') {
-    orderData = (orders.data || []).filter(o => o.status.toLowerCase() === 'extended');
+    orderData = (orders.data || []).filter(
+      (o) => o.status.toLowerCase() === 'extended'
+    );
   }
   const orderColumns = [
     { header: 'ID', accessor: 'id' },
@@ -145,39 +182,46 @@ export default function ReportsPage() {
   if (paymentReport === 'all') {
     paymentData = payments.data || [];
   } else if (paymentReport === 'outstanding') {
-    paymentData = (orders.data || []).map(o => {
-      const paid = (payments.data || []).filter(p => p.order_id === o.id).reduce((s, p) => s + (p.amount || 0), 0);
-      return {
-        order_id: o.id,
-        client_id: o.client_id,
-        total_price: o.total_price,
-        paid,
-        outstanding: Math.max((o.total_price || 0) - paid, 0),
-      };
-    }).filter(r => r.outstanding > 0);
+    paymentData = (orders.data || [])
+      .map((o) => {
+        const paid = (payments.data || [])
+          .filter((p) => p.order_id === o.id)
+          .reduce((s, p) => s + (p.amount || 0), 0);
+        return {
+          order_id: o.id,
+          client_id: o.client_id,
+          total_price: o.total_price,
+          paid,
+          outstanding: Math.max((o.total_price || 0) - paid, 0),
+        };
+      })
+      .filter((r) => r.outstanding > 0);
   }
-  const paymentColumns = paymentReport === 'all'
-    ? [
-        { header: 'ID', accessor: 'id' },
-        { header: 'Order ID', accessor: 'order_id' },
-        { header: 'Amount', accessor: 'amount' },
-        { header: 'Method', accessor: 'method' },
-        { header: 'Created At', accessor: 'created_at' },
-      ]
-    : [
-        { header: 'Order ID', accessor: 'order_id' },
-        { header: 'Client ID', accessor: 'client_id' },
-        { header: 'Total Price', accessor: 'total_price' },
-        { header: 'Paid', accessor: 'paid' },
-        { header: 'Outstanding', accessor: 'outstanding' },
-      ];
+  const paymentColumns =
+    paymentReport === 'all'
+      ? [
+          { header: 'ID', accessor: 'id' },
+          { header: 'Order ID', accessor: 'order_id' },
+          { header: 'Amount', accessor: 'amount' },
+          { header: 'Method', accessor: 'method' },
+          { header: 'Created At', accessor: 'created_at' },
+        ]
+      : [
+          { header: 'Order ID', accessor: 'order_id' },
+          { header: 'Client ID', accessor: 'client_id' },
+          { header: 'Total Price', accessor: 'total_price' },
+          { header: 'Paid', accessor: 'paid' },
+          { header: 'Outstanding', accessor: 'outstanding' },
+        ];
 
   // --- Inventory Report Data ---
   let inventoryData: any[] = [];
   if (inventoryReport === 'all') {
     inventoryData = inventory.data || [];
   } else if (inventoryReport === 'lowstock') {
-    inventoryData = (inventory.data || []).filter(i => i.low_stock_alert !== null && i.quantity < i.low_stock_alert);
+    inventoryData = (inventory.data || []).filter(
+      (i) => i.low_stock_alert !== null && i.quantity < i.low_stock_alert
+    );
   }
   const inventoryColumns = [
     { header: 'ID', accessor: 'id' },
@@ -190,14 +234,20 @@ export default function ReportsPage() {
 
   // --- Table Renderer ---
   function Table({ data, columns }: { data: any[]; columns: any[] }) {
-    if (!data.length) return <div className="text-gray-500 text-sm">No data to display.</div>;
+    if (!data.length)
+      return <div className="text-gray-500 text-sm">No data to display.</div>;
     return (
       <div className="overflow-x-auto">
         <table className="min-w-full border text-sm">
           <thead>
             <tr>
               {columns.map((col: any) => (
-                <th key={col.accessor} className="px-3 py-2 border-b bg-gray-50 text-left font-semibold">{col.header}</th>
+                <th
+                  key={col.accessor}
+                  className="px-3 py-2 border-b bg-gray-50 text-left font-semibold"
+                >
+                  {col.header}
+                </th>
               ))}
             </tr>
           </thead>
@@ -206,8 +256,12 @@ export default function ReportsPage() {
               <tr key={i} className="even:bg-gray-50">
                 {columns.map((col: any) => (
                   <td key={col.accessor} className="px-3 py-2 border-b">
-                    {col.accessor === 'total_price' || col.accessor === 'paid' || col.accessor === 'outstanding' || col.accessor === 'amount'
-                      ? row[col.accessor] !== undefined && row[col.accessor] !== null
+                    {col.accessor === 'total_price' ||
+                    col.accessor === 'paid' ||
+                    col.accessor === 'outstanding' ||
+                    col.accessor === 'amount'
+                      ? row[col.accessor] !== undefined &&
+                        row[col.accessor] !== null
                         ? `₵${(row[col.accessor] / 100).toLocaleString()}`
                         : ''
                       : row[col.accessor]}
@@ -227,14 +281,18 @@ export default function ReportsPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {/* Clients */}
         <div className="bg-white rounded-lg shadow p-6 border border-gray-100">
-          <h2 className="text-xl font-semibold mb-2 text-gray-800">Clients Summary</h2>
+          <h2 className="text-xl font-semibold mb-2 text-gray-800">
+            Clients Summary
+          </h2>
           <select
             className="mb-4 border rounded px-2 py-1 text-sm"
             value={clientReport}
-            onChange={e => setClientReport(e.target.value)}
+            onChange={(e) => setClientReport(e.target.value)}
           >
-            {clientReports.map(opt => (
-              <option key={opt.value} value={opt.value}>{opt.label}</option>
+            {clientReports.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
             ))}
           </select>
           <div className="mb-4">
@@ -245,7 +303,9 @@ export default function ReportsPage() {
             <select
               className="border rounded px-2 py-1 text-sm"
               value={clientExportFormat}
-              onChange={e => setClientExportFormat(e.target.value as 'csv' | 'pdf')}
+              onChange={(e) =>
+                setClientExportFormat(e.target.value as 'csv' | 'pdf')
+              }
               disabled={!clientReport}
             >
               <option value="csv">CSV</option>
@@ -253,16 +313,19 @@ export default function ReportsPage() {
             </select>
             <a
               href="#"
-              onClick={e => {
-                if (!clientReport) { e.preventDefault(); return; }
+              onClick={(e) => {
+                if (!clientReport) {
+                  e.preventDefault();
+                  return;
+                }
                 clientExportFormat === 'csv'
                   ? exportCSV(clientData, clientColumns, 'clients-report.csv')
                   : exportPDF(clientData, clientColumns, 'clients-report.csv');
               }}
               className={
                 !clientReport
-                  ? "text-gray-400 cursor-not-allowed pointer-events-none underline text-base font-semibold"
-                  : "text-blue-600 hover:text-blue-800 underline text-base font-semibold"
+                  ? 'text-gray-400 cursor-not-allowed pointer-events-none underline text-base font-semibold'
+                  : 'text-blue-600 hover:text-blue-800 underline text-base font-semibold'
               }
               tabIndex={!clientReport ? -1 : 0}
               aria-disabled={!clientReport}
@@ -271,19 +334,25 @@ export default function ReportsPage() {
             </a>
           </div>
           {!clientReport && (
-            <div className="text-gray-500 text-sm italic">Select a report to view.</div>
+            <div className="text-gray-500 text-sm italic">
+              Select a report to view.
+            </div>
           )}
         </div>
         {/* Orders */}
         <div className="bg-white rounded-lg shadow p-6 border border-gray-100">
-          <h2 className="text-xl font-semibold mb-2 text-gray-800">Orders Report</h2>
+          <h2 className="text-xl font-semibold mb-2 text-gray-800">
+            Orders Report
+          </h2>
           <select
             className="mb-4 border rounded px-2 py-1 text-sm"
             value={orderReport}
-            onChange={e => setOrderReport(e.target.value)}
+            onChange={(e) => setOrderReport(e.target.value)}
           >
-            {orderReports.map(opt => (
-              <option key={opt.value} value={opt.value}>{opt.label}</option>
+            {orderReports.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
             ))}
           </select>
           <div className="mb-4">
@@ -294,7 +363,9 @@ export default function ReportsPage() {
             <select
               className="border rounded px-2 py-1 text-sm"
               value={orderExportFormat}
-              onChange={e => setOrderExportFormat(e.target.value as 'csv' | 'pdf')}
+              onChange={(e) =>
+                setOrderExportFormat(e.target.value as 'csv' | 'pdf')
+              }
               disabled={!orderReport}
             >
               <option value="csv">CSV</option>
@@ -302,16 +373,19 @@ export default function ReportsPage() {
             </select>
             <a
               href="#"
-              onClick={e => {
-                if (!orderReport) { e.preventDefault(); return; }
+              onClick={(e) => {
+                if (!orderReport) {
+                  e.preventDefault();
+                  return;
+                }
                 orderExportFormat === 'csv'
                   ? exportCSV(orderData, orderColumns, 'orders-report.csv')
                   : exportPDF(orderData, orderColumns, 'orders-report.csv');
               }}
               className={
                 !orderReport
-                  ? "text-gray-400 cursor-not-allowed pointer-events-none underline text-base font-semibold"
-                  : "text-blue-600 hover:text-blue-800 underline text-base font-semibold"
+                  ? 'text-gray-400 cursor-not-allowed pointer-events-none underline text-base font-semibold'
+                  : 'text-blue-600 hover:text-blue-800 underline text-base font-semibold'
               }
               tabIndex={!orderReport ? -1 : 0}
               aria-disabled={!orderReport}
@@ -320,19 +394,25 @@ export default function ReportsPage() {
             </a>
           </div>
           {!orderReport && (
-            <div className="text-gray-500 text-sm italic">Select a report to view.</div>
+            <div className="text-gray-500 text-sm italic">
+              Select a report to view.
+            </div>
           )}
         </div>
         {/* Payments */}
         <div className="bg-white rounded-lg shadow p-6 border border-gray-100">
-          <h2 className="text-xl font-semibold mb-2 text-gray-800">Payments Report</h2>
+          <h2 className="text-xl font-semibold mb-2 text-gray-800">
+            Payments Report
+          </h2>
           <select
             className="mb-4 border rounded px-2 py-1 text-sm"
             value={paymentReport}
-            onChange={e => setPaymentReport(e.target.value)}
+            onChange={(e) => setPaymentReport(e.target.value)}
           >
-            {paymentReports.map(opt => (
-              <option key={opt.value} value={opt.value}>{opt.label}</option>
+            {paymentReports.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
             ))}
           </select>
           <div className="mb-4">
@@ -343,7 +423,9 @@ export default function ReportsPage() {
             <select
               className="border rounded px-2 py-1 text-sm"
               value={paymentExportFormat}
-              onChange={e => setPaymentExportFormat(e.target.value as 'csv' | 'pdf')}
+              onChange={(e) =>
+                setPaymentExportFormat(e.target.value as 'csv' | 'pdf')
+              }
               disabled={!paymentReport}
             >
               <option value="csv">CSV</option>
@@ -351,16 +433,27 @@ export default function ReportsPage() {
             </select>
             <a
               href="#"
-              onClick={e => {
-                if (!paymentReport) { e.preventDefault(); return; }
+              onClick={(e) => {
+                if (!paymentReport) {
+                  e.preventDefault();
+                  return;
+                }
                 paymentExportFormat === 'csv'
-                  ? exportCSV(paymentData, paymentColumns, 'payments-report.csv')
-                  : exportPDF(paymentData, paymentColumns, 'payments-report.csv');
+                  ? exportCSV(
+                      paymentData,
+                      paymentColumns,
+                      'payments-report.csv'
+                    )
+                  : exportPDF(
+                      paymentData,
+                      paymentColumns,
+                      'payments-report.csv'
+                    );
               }}
               className={
                 !paymentReport
-                  ? "text-gray-400 cursor-not-allowed pointer-events-none underline text-base font-semibold"
-                  : "text-blue-600 hover:text-blue-800 underline text-base font-semibold"
+                  ? 'text-gray-400 cursor-not-allowed pointer-events-none underline text-base font-semibold'
+                  : 'text-blue-600 hover:text-blue-800 underline text-base font-semibold'
               }
               tabIndex={!paymentReport ? -1 : 0}
               aria-disabled={!paymentReport}
@@ -369,19 +462,25 @@ export default function ReportsPage() {
             </a>
           </div>
           {!paymentReport && (
-            <div className="text-gray-500 text-sm italic">Select a report to view.</div>
+            <div className="text-gray-500 text-sm italic">
+              Select a report to view.
+            </div>
           )}
         </div>
         {/* Inventory */}
         <div className="bg-white rounded-lg shadow p-6 border border-gray-100">
-          <h2 className="text-xl font-semibold mb-2 text-gray-800">Inventory Report</h2>
+          <h2 className="text-xl font-semibold mb-2 text-gray-800">
+            Inventory Report
+          </h2>
           <select
             className="mb-4 border rounded px-2 py-1 text-sm"
             value={inventoryReport}
-            onChange={e => setInventoryReport(e.target.value)}
+            onChange={(e) => setInventoryReport(e.target.value)}
           >
-            {inventoryReports.map(opt => (
-              <option key={opt.value} value={opt.value}>{opt.label}</option>
+            {inventoryReports.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
             ))}
           </select>
           <div className="mb-4">
@@ -392,7 +491,9 @@ export default function ReportsPage() {
             <select
               className="border rounded px-2 py-1 text-sm"
               value={inventoryExportFormat}
-              onChange={e => setInventoryExportFormat(e.target.value as 'csv' | 'pdf')}
+              onChange={(e) =>
+                setInventoryExportFormat(e.target.value as 'csv' | 'pdf')
+              }
               disabled={!inventoryReport}
             >
               <option value="csv">CSV</option>
@@ -400,16 +501,27 @@ export default function ReportsPage() {
             </select>
             <a
               href="#"
-              onClick={e => {
-                if (!inventoryReport) { e.preventDefault(); return; }
+              onClick={(e) => {
+                if (!inventoryReport) {
+                  e.preventDefault();
+                  return;
+                }
                 inventoryExportFormat === 'csv'
-                  ? exportCSV(inventoryData, inventoryColumns, 'inventory-report.csv')
-                  : exportPDF(inventoryData, inventoryColumns, 'inventory-report.csv');
+                  ? exportCSV(
+                      inventoryData,
+                      inventoryColumns,
+                      'inventory-report.csv'
+                    )
+                  : exportPDF(
+                      inventoryData,
+                      inventoryColumns,
+                      'inventory-report.csv'
+                    );
               }}
               className={
                 !inventoryReport
-                  ? "text-gray-400 cursor-not-allowed pointer-events-none underline text-base font-semibold"
-                  : "text-blue-600 hover:text-blue-800 underline text-base font-semibold"
+                  ? 'text-gray-400 cursor-not-allowed pointer-events-none underline text-base font-semibold'
+                  : 'text-blue-600 hover:text-blue-800 underline text-base font-semibold'
               }
               tabIndex={!inventoryReport ? -1 : 0}
               aria-disabled={!inventoryReport}
@@ -418,10 +530,12 @@ export default function ReportsPage() {
             </a>
           </div>
           {!inventoryReport && (
-            <div className="text-gray-500 text-sm italic">Select a report to view.</div>
+            <div className="text-gray-500 text-sm italic">
+              Select a report to view.
+            </div>
           )}
         </div>
       </div>
     </div>
   );
-} 
+}

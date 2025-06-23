@@ -1,7 +1,13 @@
 import { getAuth } from '@clerk/nextjs/server';
 import type { NextApiRequest, NextApiResponse } from 'next';
 
-export function createContext({ req, res }: { req: NextApiRequest; res: NextApiResponse }) {
+export function createContext({
+  req,
+  res,
+}: {
+  req: NextApiRequest;
+  res: NextApiResponse;
+}) {
   const auth = getAuth(req);
   return {
     userId: auth.userId,
@@ -10,4 +16,4 @@ export function createContext({ req, res }: { req: NextApiRequest; res: NextApiR
   };
 }
 
-export type Context = ReturnType<typeof createContext>; 
+export type Context = ReturnType<typeof createContext>;

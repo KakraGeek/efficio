@@ -5,4 +5,4 @@ const LoadingSpinner = () => (
   </div>
 );
 
-export default LoadingSpinner; 
+export default LoadingSpinner;

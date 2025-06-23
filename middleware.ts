@@ -4,4 +4,4 @@ export default clerkMiddleware();
 
 export const config = {
   matcher: '/:path*',
-}; 
+};

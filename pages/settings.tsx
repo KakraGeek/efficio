@@ -11,7 +11,13 @@ export default function SettingsPage() {
   const [logoUrl, setLogoUrl] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [initialSettings, setInitialSettings] = useState({ businessName: '', address: '', phone: '', email: '', logoUrl: '' });
+  const [initialSettings, setInitialSettings] = useState({
+    businessName: '',
+    address: '',
+    phone: '',
+    email: '',
+    logoUrl: '',
+  });
   const [showConfirm, setShowConfirm] = useState(false);
 
   // Track if any field has changed
@@ -79,7 +85,7 @@ export default function SettingsPage() {
     let uploadedLogoUrl = logoUrl;
     if (logoFile) {
       const formData = new FormData();
-      formData.append("file", logoFile);
+      formData.append('file', logoFile);
       try {
         const res = await fetch('/api/upload-order-image', {
           method: 'POST',
@@ -103,12 +109,24 @@ export default function SettingsPage() {
       const res = await fetch('/api/settings', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ businessName, address, phone, email, logoUrl: uploadedLogoUrl }),
+        body: JSON.stringify({
+          businessName,
+          address,
+          phone,
+          email,
+          logoUrl: uploadedLogoUrl,
+        }),
       });
       if (res.ok) {
         toast.success('Settings saved!');
         setLogoUrl(uploadedLogoUrl);
-        setInitialSettings({ businessName, address, phone, email, logoUrl: uploadedLogoUrl });
+        setInitialSettings({
+          businessName,
+          address,
+          phone,
+          email,
+          logoUrl: uploadedLogoUrl,
+        });
       } else {
         toast.error('Failed to save settings.');
       }
@@ -129,35 +147,72 @@ export default function SettingsPage() {
     <form onSubmit={handleSubmit} className="max-w-md mx-auto p-4">
       {loading && <div className="mb-4 text-gray-500">Loading...</div>}
       <div style={{ width: 350, marginBottom: 32 }}>
-        <h2 style={{ color: '#2563eb', fontWeight: 600, fontSize: 20, marginBottom: 16 }}>Business Info</h2>
+        <h2
+          style={{
+            color: '#2563eb',
+            fontWeight: 600,
+            fontSize: 20,
+            marginBottom: 16,
+          }}
+        >
+          Business Info
+        </h2>
         <div style={{ marginBottom: 16 }}>
-          <label style={{ display: 'block', marginBottom: 4 }}>Business Name</label>
+          <label style={{ display: 'block', marginBottom: 4 }}>
+            Business Name
+          </label>
           <input
             type="text"
             value={businessName}
             onChange={(e) => setBusinessName(e.target.value)}
-            style={{ width: '100%', padding: 8, borderRadius: 4, border: '1px solid #ccc' }}
+            style={{
+              width: '100%',
+              padding: 8,
+              borderRadius: 4,
+              border: '1px solid #ccc',
+            }}
           />
         </div>
         <div>
-          <label style={{ display: 'block', marginBottom: 4 }}>Business Address</label>
+          <label style={{ display: 'block', marginBottom: 4 }}>
+            Business Address
+          </label>
           <input
             type="text"
             value={address}
             onChange={(e) => setAddress(e.target.value)}
-            style={{ width: '100%', padding: 8, borderRadius: 4, border: '1px solid #ccc' }}
+            style={{
+              width: '100%',
+              padding: 8,
+              borderRadius: 4,
+              border: '1px solid #ccc',
+            }}
           />
         </div>
       </div>
       <div style={{ width: 350, marginBottom: 32 }}>
-        <h2 style={{ color: '#2563eb', fontWeight: 600, fontSize: 20, marginBottom: 16 }}>Contact</h2>
+        <h2
+          style={{
+            color: '#2563eb',
+            fontWeight: 600,
+            fontSize: 20,
+            marginBottom: 16,
+          }}
+        >
+          Contact
+        </h2>
         <div style={{ marginBottom: 16 }}>
           <label style={{ display: 'block', marginBottom: 4 }}>Phone</label>
           <input
             type="tel"
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
-            style={{ width: '100%', padding: 8, borderRadius: 4, border: '1px solid #ccc' }}
+            style={{
+              width: '100%',
+              padding: 8,
+              borderRadius: 4,
+              border: '1px solid #ccc',
+            }}
           />
         </div>
         <div>
@@ -166,12 +221,26 @@ export default function SettingsPage() {
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            style={{ width: '100%', padding: 8, borderRadius: 4, border: '1px solid #ccc' }}
+            style={{
+              width: '100%',
+              padding: 8,
+              borderRadius: 4,
+              border: '1px solid #ccc',
+            }}
           />
         </div>
       </div>
       <div style={{ width: 350, marginBottom: 32 }}>
-        <h2 style={{ color: '#2563eb', fontWeight: 600, fontSize: 20, marginBottom: 16 }}>Business Logo</h2>
+        <h2
+          style={{
+            color: '#2563eb',
+            fontWeight: 600,
+            fontSize: 20,
+            marginBottom: 16,
+          }}
+        >
+          Business Logo
+        </h2>
         <input
           type="file"
           accept="image/*"
@@ -197,13 +266,29 @@ export default function SettingsPage() {
             border: 'none',
             borderRadius: 8,
             cursor: 'pointer',
-            boxShadow: '0 2px 8px rgba(59, 130, 246, 0.15)'
+            boxShadow: '0 2px 8px rgba(59, 130, 246, 0.15)',
           }}
         >
           {saving && (
-            <svg className="animate-spin h-5 w-5 mr-2 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+            <svg
+              className="animate-spin h-5 w-5 mr-2 text-white"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <circle
+                className="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="4"
+              ></circle>
+              <path
+                className="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8v8z"
+              ></path>
             </svg>
           )}
           Save Changes
@@ -220,7 +305,7 @@ export default function SettingsPage() {
             border: 'none',
             borderRadius: 8,
             cursor: 'pointer',
-            boxShadow: '0 2px 8px rgba(59, 130, 246, 0.15)'
+            boxShadow: '0 2px 8px rgba(59, 130, 246, 0.15)',
           }}
           onClick={handleReset}
           disabled={saving || !isChanged}
@@ -233,7 +318,10 @@ export default function SettingsPage() {
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-30 z-50">
           <div className="bg-white p-6 rounded shadow-lg max-w-sm w-full">
             <h3 className="text-lg font-semibold mb-4">Confirm Save</h3>
-            <p>Are you sure you want to save these changes to your business settings?</p>
+            <p>
+              Are you sure you want to save these changes to your business
+              settings?
+            </p>
             <div
               className="flex justify-center gap-4 mt-6 border-t pt-4"
               style={{ minWidth: 320, width: '100%' }}
@@ -256,7 +344,7 @@ export default function SettingsPage() {
                   color: 'white',
                   border: '2px solid #1d4ed8',
                   fontSize: 18,
-                  boxShadow: '0 2px 8px rgba(59, 130, 246, 0.15)'
+                  boxShadow: '0 2px 8px rgba(59, 130, 246, 0.15)',
                 }}
               >
                 {saving ? 'Saving...' : 'Yes, Save'}
@@ -267,4 +355,4 @@ export default function SettingsPage() {
       )}
     </form>
   );
-} 
+}

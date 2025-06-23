@@ -1,4 +1,10 @@
-import { SignedIn, SignedOut, SignInButton, UserButton, useUser } from '@clerk/nextjs';
+import {
+  SignedIn,
+  SignedOut,
+  SignInButton,
+  UserButton,
+  useUser,
+} from '@clerk/nextjs';
 
 export default function ProtectedPage() {
   const { user } = useUser();
@@ -7,7 +13,9 @@ export default function ProtectedPage() {
     <div style={{ padding: 32 }}>
       <SignedIn>
         <h1>Protected Page</h1>
-        <p>Welcome, {user?.firstName || user?.emailAddresses[0]?.emailAddress}!</p>
+        <p>
+          Welcome, {user?.firstName || user?.emailAddresses[0]?.emailAddress}!
+        </p>
         <UserButton />
         <p>This page is only visible to signed-in users.</p>
       </SignedIn>

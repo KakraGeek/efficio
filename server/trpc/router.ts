@@ -56,10 +56,10 @@ export const appRouter = t.router({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      if (!ctx.userId) throw new Error("Not authenticated");
+      if (!ctx.userId) throw new Error('Not authenticated');
       return db.insert(clients).values({ ...input, user_id: ctx.userId });
     }),
-  
+
   removeClient: t.procedure
     .input(z.object({ id: z.number() }))
     .mutation(async ({ input }) => {
@@ -75,15 +75,17 @@ export const appRouter = t.router({
 
   // Create a new order for the current user
   createOrder: t.procedure
-    .input(z.object({
-      client_id: z.number(),
-      status: z.string(),
-      description: z.string().nullable().optional(),
-      due_date: z.string().nullable().optional(),
-      total_price: z.number().nullable().optional(),
-      image_url: z.string().nullable().optional(),
-      // Measurements fields can be added here if you want to store them per order
-    }))
+    .input(
+      z.object({
+        client_id: z.number(),
+        status: z.string(),
+        description: z.string().nullable().optional(),
+        due_date: z.string().nullable().optional(),
+        total_price: z.number().nullable().optional(),
+        image_url: z.string().nullable().optional(),
+        // Measurements fields can be added here if you want to store them per order
+      })
+    )
     .mutation(async ({ ctx, input }) => {
       if (!ctx.userId) throw new Error('Not authenticated');
       const [order] = await db
@@ -110,15 +112,17 @@ export const appRouter = t.router({
 
   // Add update mutations for all tables
   updateClient: t.procedure
-    .input(z.object({
-      id: z.number(),
-      name: z.string().optional(),
-      phone: z.string().nullable().optional(),
-      email: z.string().nullable().optional(),
-      // Add all other client fields as needed
-      notes: z.string().nullable().optional(),
-      // ...measurement fields...
-    }))
+    .input(
+      z.object({
+        id: z.number(),
+        name: z.string().optional(),
+        phone: z.string().nullable().optional(),
+        email: z.string().nullable().optional(),
+        // Add all other client fields as needed
+        notes: z.string().nullable().optional(),
+        // ...measurement fields...
+      })
+    )
     .mutation(async ({ ctx, input }) => {
       if (!ctx.userId) throw new Error('Not authenticated');
       const { id, ...updates } = input;
@@ -131,15 +135,17 @@ export const appRouter = t.router({
     }),
 
   updateOrder: t.procedure
-    .input(z.object({
-      id: z.number(),
-      status: z.string().optional(),
-      description: z.string().nullable().optional(),
-      due_date: z.string().nullable().optional(),
-      total_price: z.number().nullable().optional(),
-      image_url: z.string().nullable().optional(),
-      // ...other order fields...
-    }))
+    .input(
+      z.object({
+        id: z.number(),
+        status: z.string().optional(),
+        description: z.string().nullable().optional(),
+        due_date: z.string().nullable().optional(),
+        total_price: z.number().nullable().optional(),
+        image_url: z.string().nullable().optional(),
+        // ...other order fields...
+      })
+    )
     .mutation(async ({ ctx, input }) => {
       if (!ctx.userId) throw new Error('Not authenticated');
       const { id, due_date, ...updates } = input;
@@ -149,7 +155,10 @@ export const appRouter = t.router({
       }
       // Debug log for status update
       if ('status' in updateObj) {
-        console.log(`[updateOrder] Updating order ID ${id} to status:`, updateObj.status);
+        console.log(
+          `[updateOrder] Updating order ID ${id} to status:`,
+          updateObj.status
+        );
       }
       const [order] = await db
         .update(orders)
@@ -160,15 +169,17 @@ export const appRouter = t.router({
     }),
 
   updateInventory: t.procedure
-    .input(z.object({
-      id: z.number(),
-      name: z.string().optional(),
-      category: z.string().nullable().optional(),
-      quantity: z.number().optional(),
-      unit: z.string().nullable().optional(),
-      low_stock_alert: z.number().nullable().optional(),
-      // ...other inventory fields...
-    }))
+    .input(
+      z.object({
+        id: z.number(),
+        name: z.string().optional(),
+        category: z.string().nullable().optional(),
+        quantity: z.number().optional(),
+        unit: z.string().nullable().optional(),
+        low_stock_alert: z.number().nullable().optional(),
+        // ...other inventory fields...
+      })
+    )
     .mutation(async ({ ctx, input }) => {
       if (!ctx.userId) throw new Error('Not authenticated');
       const { id, ...updates } = input;
@@ -181,16 +192,18 @@ export const appRouter = t.router({
     }),
 
   updatePayment: t.procedure
-    .input(z.object({
-      id: z.number(),
-      amount: z.number().optional(),
-      method: z.string().optional(),
-      status: z.string().nullable().optional(),
-      transaction_ref: z.string().nullable().optional(),
-      payment_type: z.string().optional(),
-      payment_balance: z.number().optional(),
-      // ...other payment fields...
-    }))
+    .input(
+      z.object({
+        id: z.number(),
+        amount: z.number().optional(),
+        method: z.string().optional(),
+        status: z.string().nullable().optional(),
+        transaction_ref: z.string().nullable().optional(),
+        payment_type: z.string().optional(),
+        payment_balance: z.number().optional(),
+        // ...other payment fields...
+      })
+    )
     .mutation(async ({ ctx, input }) => {
       if (!ctx.userId) throw new Error('Not authenticated');
       const { id, ...updates } = input;
@@ -208,4 +221,4 @@ export const appRouter = t.router({
 export type AppRouter = typeof appRouter;
 
 // This creates a tRPC React hook set for your API
-export const trpc = createTRPCReact<AppRouter>(); 
+export const trpc = createTRPCReact<AppRouter>();
