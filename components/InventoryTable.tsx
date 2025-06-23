@@ -90,7 +90,7 @@ const InventoryTable: React.FC = () => {
       toast.error(`Error creating item: ${error.message}`);
     },
   });
-  const updateInventoryItem = trpc.updateInventoryItem.useMutation({
+  const updateInventoryItem = trpc.updateInventory.useMutation({
     onSuccess: () => {
       utils.getInventory.invalidate();
       toast.success('Item updated successfully!');

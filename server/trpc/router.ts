@@ -230,6 +230,19 @@ export const appRouter = t.router({
       if (!ctx.userId) throw new Error('Not authenticated');
       return db.insert(inventory).values({ ...input, user_id: ctx.userId });
     }),
+
+  deleteInventoryItem: t.procedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ input }) => {
+      return db.delete(inventory).where(eq(inventory.id, input.id));
+    }),
+
+  bulkDeleteInventory: t.procedure
+    .input(z.object({ ids: z.array(z.number()) }))
+    .mutation(async ({ input }) => {
+      if (input.ids.length === 0) return;
+      return db.delete(inventory).where(inArray(inventory.id, input.ids));
+    }),
 });
 
 // Export type definition of API
