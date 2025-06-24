@@ -158,8 +158,11 @@ const OrdersTable: React.FC = () => {
   // Edit modal state
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [orderToEdit, setOrderToEdit] = useState<Order | null>(null);
-  const [editForm, setEditForm] = useState<Partial<Order>>({
+  const [editForm, setEditForm] = useState<
+    Partial<Order> & { total_price_input?: string }
+  >({
     pendingSync: false,
+    total_price_input: '',
   });
   // Add new modal state
   const [addModalOpen, setAddModalOpen] = useState(false);
@@ -194,6 +197,9 @@ const OrdersTable: React.FC = () => {
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   // Bulk delete modal state
   const [bulkDeleteModalOpen, setBulkDeleteModalOpen] = useState(false);
+  // Add state for edit image upload
+  const [editImage, setEditImage] = useState<File | null>(null);
+  const [editImagePreview, setEditImagePreview] = useState<string | null>(null);
 
   // Get unique statuses for the dropdown
   const statusOptions = useMemo(() => {
@@ -222,7 +228,13 @@ const OrdersTable: React.FC = () => {
             className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600 text-sm"
             onClick={() => {
               setOrderToEdit(row);
-              setEditForm(row);
+              setEditForm({
+                ...row,
+                total_price_input:
+                  row.total_price !== undefined && row.total_price !== null
+                    ? (row.total_price / 100).toFixed(2)
+                    : '',
+              });
               setEditModalOpen(true);
             }}
           >
@@ -389,16 +401,45 @@ const OrdersTable: React.FC = () => {
   const handleEditSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!orderToEdit) return;
+    let uploadedImageUrl = editForm.image_url;
+    if (editImage) {
+      const formData = new FormData();
+      formData.append('file', editImage);
+      try {
+        const res = await fetch('/api/upload-order-image', {
+          method: 'POST',
+          body: formData,
+        });
+        if (res.ok) {
+          const data = await res.json();
+          uploadedImageUrl = data.url;
+        } else {
+          toast.error('Image upload failed');
+          return;
+        }
+      } catch (err) {
+        toast.error('Image upload failed');
+        return;
+      }
+    }
     try {
       await updateOrder.mutateAsync({
         id: orderToEdit.id,
         status: editForm.status,
         description: editForm.description,
         due_date: editForm.due_date,
-        total_price: editForm.total_price,
-        image_url: editForm.image_url,
+        total_price:
+          editForm.total_price_input !== undefined &&
+          editForm.total_price_input !== ''
+            ? Math.round(Number(editForm.total_price_input) * 100)
+            : undefined,
+        image_url: uploadedImageUrl,
       });
       setEditModalOpen(false);
+      setOrderToEdit(null);
+      setEditForm({ pendingSync: false, total_price_input: '' });
+      setEditImage(null);
+      setEditImagePreview(null);
       toast.success('Order updated successfully!');
     } catch (error: any) {
       toast.error(`Error updating order: ${error.message}`);
@@ -412,16 +453,37 @@ const OrdersTable: React.FC = () => {
       toast.error('Please select a client');
       return;
     }
+    let uploadedImageUrl = undefined;
+    if (addImage) {
+      const formData = new FormData();
+      formData.append('file', addImage);
+      try {
+        const res = await fetch('/api/upload-order-image', {
+          method: 'POST',
+          body: formData,
+        });
+        if (res.ok) {
+          const data = await res.json();
+          uploadedImageUrl = data.url;
+        } else {
+          toast.error('Image upload failed');
+          return;
+        }
+      } catch (err) {
+        toast.error('Image upload failed');
+        return;
+      }
+    }
     try {
-      // Create the order with all fields, including image_url
       await createOrder.mutateAsync({
-        ...addForm,
         client_id: Number(addForm.client_id),
-        status: addForm.status || 'pending',
-        description: addForm.description || null,
-        due_date: addForm.due_date || null,
-        total_price: addForm.total_price || null,
-        image_url: addForm.image_url || null,
+        status: addForm.status,
+        description: addForm.description || undefined,
+        due_date: addForm.due_date || undefined,
+        total_price: addForm.total_price
+          ? Math.round(Number(addForm.total_price) * 100)
+          : undefined,
+        image_url: uploadedImageUrl || undefined,
       });
       setAddModalOpen(false);
       toast.success('Order created successfully!');
@@ -582,16 +644,23 @@ const OrdersTable: React.FC = () => {
         {orderToView ? (
           <div className="space-y-2">
             <div>
+              <span className="font-semibold">Client:</span>{' '}
+              {(() => {
+                const client = clientsData?.find(
+                  (c) => c.id === orderToView.client_id
+                );
+                return client
+                  ? `${client.name} (ID: ${client.id})`
+                  : `ID: ${orderToView.client_id}`;
+              })()}
+            </div>
+            <div>
               <span className="font-semibold">Order ID:</span> {orderToView.id}{' '}
               {(orderToView as any).pendingSync && (
                 <span className="ml-2 px-2 py-0.5 bg-yellow-400 text-xs rounded">
                   Pending Sync
                 </span>
               )}
-            </div>
-            <div>
-              <span className="font-semibold">Client ID:</span>{' '}
-              {orderToView.client_id}
             </div>
             <div>
               <span className="font-semibold">Status:</span>{' '}
@@ -621,6 +690,21 @@ const OrdersTable: React.FC = () => {
               <span className="font-semibold">Last Updated:</span>{' '}
               {formatDateBritish(orderToView.updated_at)}
             </div>
+            {/* Show order image if available */}
+            {orderToView.image_url && (
+              <div>
+                <span className="font-semibold">Order Image:</span>
+                <div className="mt-2">
+                  <Image
+                    src={orderToView.image_url}
+                    alt="Order Image"
+                    width={160}
+                    height={160}
+                    className="rounded border object-contain max-h-40"
+                  />
+                </div>
+              </div>
+            )}
           </div>
         ) : null}
       </Modal>
@@ -630,29 +714,9 @@ const OrdersTable: React.FC = () => {
         onClose={() => {
           setEditModalOpen(false);
           setOrderToEdit(null);
-          setEditForm({ pendingSync: false });
+          setEditForm({ pendingSync: false, total_price_input: '' });
         }}
         title="Edit Order"
-        actions={
-          <>
-            <button
-              className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300 mr-2"
-              onClick={() => {
-                setEditModalOpen(false);
-                setOrderToEdit(null);
-                setEditForm({ pendingSync: false });
-              }}
-            >
-              Cancel
-            </button>
-            <button
-              className="px-4 py-2 rounded bg-green-500 text-white hover:bg-green-600"
-              onClick={handleEditSubmit}
-            >
-              Save
-            </button>
-          </>
-        }
       >
         {orderToEdit ? (
           <form className="space-y-3" onSubmit={handleEditSubmit}>
@@ -684,7 +748,77 @@ const OrdersTable: React.FC = () => {
                 }
               />
             </div>
-            {/* Add more fields as needed */}
+            <div>
+              <label className="block font-semibold mb-1">
+                Total Amount (GHS)
+              </label>
+              <input
+                type="number"
+                step="0.01"
+                className="w-full border rounded px-2 py-1"
+                value={editForm.total_price_input ?? ''}
+                onChange={(e) =>
+                  setEditForm((f) => ({
+                    ...f,
+                    total_price_input: e.target.value,
+                  }))
+                }
+              />
+            </div>
+            <div>
+              <label className="block font-semibold mb-1">
+                Order Image (optional)
+              </label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    setEditImage(file);
+                    setEditImagePreview(URL.createObjectURL(file));
+                  }
+                }}
+                className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+              />
+              {/* Show preview of new or existing image */}
+              {editImagePreview ? (
+                <Image
+                  src={editImagePreview}
+                  alt="Order Preview"
+                  width={80}
+                  height={80}
+                  className="mt-3 h-20 object-contain rounded border"
+                />
+              ) : editForm.image_url ? (
+                <Image
+                  src={editForm.image_url}
+                  alt="Order Image"
+                  width={80}
+                  height={80}
+                  className="mt-3 h-20 object-contain rounded border"
+                />
+              ) : null}
+            </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <button
+                type="button"
+                className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300 mr-2"
+                onClick={() => {
+                  setEditModalOpen(false);
+                  setOrderToEdit(null);
+                  setEditForm({ pendingSync: false, total_price_input: '' });
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="px-4 py-2 rounded bg-green-500 text-white hover:bg-green-600"
+              >
+                Save
+              </button>
+            </div>
           </form>
         ) : null}
       </Modal>
@@ -714,43 +848,6 @@ const OrdersTable: React.FC = () => {
           setAddImagePreview(null);
         }}
         title="Add New Order"
-        actions={
-          <>
-            <button
-              className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300 mr-2"
-              onClick={() => {
-                setAddModalOpen(false);
-                setAddForm({
-                  client_id: '',
-                  status: '',
-                  description: '',
-                  due_date: '',
-                  total_price: '',
-                  neck: '',
-                  chest: '',
-                  bust: '',
-                  waist: '',
-                  hips: '',
-                  thigh: '',
-                  inseam: '',
-                  arm_length: '',
-                  notes: '',
-                  pendingSync: false,
-                });
-                setAddImage(null);
-                setAddImagePreview(null);
-              }}
-            >
-              Cancel
-            </button>
-            <button
-              className="px-4 py-2 rounded bg-green-600 text-white hover:bg-green-700"
-              onClick={handleAddSubmit}
-            >
-              Add
-            </button>
-          </>
-        }
       >
         <form className="space-y-3" onSubmit={handleAddSubmit}>
           {/* Client Dropdown */}
@@ -961,6 +1058,42 @@ const OrdersTable: React.FC = () => {
                 className="mt-3 h-20 object-contain rounded border"
               />
             )}
+          </div>
+          <div className="flex justify-end gap-2 pt-2">
+            <button
+              type="button"
+              className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300 mr-2"
+              onClick={() => {
+                setAddModalOpen(false);
+                setAddForm({
+                  client_id: '',
+                  status: '',
+                  description: '',
+                  due_date: '',
+                  total_price: '',
+                  neck: '',
+                  chest: '',
+                  bust: '',
+                  waist: '',
+                  hips: '',
+                  thigh: '',
+                  inseam: '',
+                  arm_length: '',
+                  notes: '',
+                  pendingSync: false,
+                });
+                setAddImage(null);
+                setAddImagePreview(null);
+              }}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="px-4 py-2 rounded bg-green-600 text-white hover:bg-green-700"
+            >
+              Add
+            </button>
           </div>
         </form>
       </Modal>

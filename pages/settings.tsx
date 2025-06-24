@@ -2,6 +2,7 @@ import React, { useState, useEffect, ChangeEvent, FormEvent } from 'react';
 import toast from 'react-hot-toast';
 import Image from 'next/image';
 import { RequireAuth } from '../components/RequireAuth';
+import { trpc } from '../utils/trpc';
 
 export default function SettingsPage() {
   const [businessName, setBusinessName] = useState('');
@@ -22,6 +23,41 @@ export default function SettingsPage() {
   });
   const [showConfirm, setShowConfirm] = useState(false);
 
+  const utils = trpc.useContext();
+  const { data: settings } = trpc.getSettings.useQuery();
+
+  useEffect(() => {
+    if (settings) {
+      setBusinessName(settings.businessName || '');
+      setAddress(settings.address || '');
+      setPhone(settings.phone || '');
+      setEmail(settings.email || '');
+      setLogoUrl(settings.logoUrl || '');
+      setLogoPreview(settings.logoUrl || '');
+      setInitialSettings({
+        businessName: settings.businessName || '',
+        address: settings.address || '',
+        phone: settings.phone || '',
+        email: settings.email || '',
+        logoUrl: settings.logoUrl || '',
+      });
+      setLoading(false);
+    }
+  }, [settings]);
+
+  const updateSettings = trpc.updateSettings.useMutation({
+    onSuccess: () => {
+      utils.getSettings.invalidate();
+      toast.success('Settings saved successfully!');
+      setSaving(false);
+      setShowConfirm(false);
+    },
+    onError: (error) => {
+      toast.error(`Failed to save settings: ${error.message}`);
+      setSaving(false);
+    },
+  });
+
   // Track if any field has changed
   const isChanged =
     businessName !== initialSettings.businessName ||
@@ -29,37 +65,6 @@ export default function SettingsPage() {
     phone !== initialSettings.phone ||
     email !== initialSettings.email ||
     logoPreview !== initialSettings.logoUrl;
-
-  useEffect(() => {
-    async function fetchSettings() {
-      try {
-        const res = await fetch('/api/settings');
-        if (res.ok) {
-          const data = await res.json();
-          setBusinessName(data.businessName || '');
-          setAddress(data.address || '');
-          setPhone(data.phone || '');
-          setEmail(data.email || '');
-          setLogoUrl(data.logoUrl || '');
-          setLogoPreview(data.logoUrl || '');
-          setInitialSettings({
-            businessName: data.businessName || '',
-            address: data.address || '',
-            phone: data.phone || '',
-            email: data.email || '',
-            logoUrl: data.logoUrl || '',
-          });
-        } else {
-          toast.error('Failed to load settings.');
-        }
-      } catch (err) {
-        toast.error('Network error.');
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchSettings();
-  }, []);
 
   function handleLogoChange(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -85,6 +90,7 @@ export default function SettingsPage() {
   async function handleSave() {
     setSaving(true);
     let uploadedLogoUrl = logoUrl;
+
     if (logoFile) {
       const formData = new FormData();
       formData.append('file', logoFile);
@@ -107,37 +113,14 @@ export default function SettingsPage() {
         return;
       }
     }
-    try {
-      const res = await fetch('/api/settings', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          businessName,
-          address,
-          phone,
-          email,
-          logoUrl: uploadedLogoUrl,
-        }),
-      });
-      if (res.ok) {
-        toast.success('Settings saved!');
-        setLogoUrl(uploadedLogoUrl);
-        setInitialSettings({
-          businessName,
-          address,
-          phone,
-          email,
-          logoUrl: uploadedLogoUrl,
-        });
-      } else {
-        toast.error('Failed to save settings.');
-      }
-    } catch (err) {
-      toast.error('Network error.');
-    } finally {
-      setSaving(false);
-      setShowConfirm(false);
-    }
+
+    updateSettings.mutate({
+      businessName,
+      address,
+      phone,
+      email,
+      logoUrl: uploadedLogoUrl,
+    });
   }
 
   function handleSubmit(e: FormEvent<HTMLFormElement>) {

@@ -3,6 +3,7 @@ import DataTable, { Column, SortState } from './DataTable';
 import { trpc } from '../utils/trpc';
 import Modal from './Modal';
 import toast from 'react-hot-toast';
+import { formatDateBritish } from '../lib/utils';
 
 // Define the shape of a payment object (should match your DB schema)
 interface Payment {
@@ -23,59 +24,6 @@ interface Payment {
 // Extend Payment for table data to include renderActions
 type PaymentRow = Payment & { renderActions?: () => React.ReactNode };
 
-// Define columns for the payments table
-const columns: Column<Payment>[] = [
-  { accessor: 'id', header: 'Payment ID' },
-  { accessor: 'order_id', header: 'Order ID' },
-  {
-    accessor: 'amount',
-    header: 'Amount (GHC)',
-    render: (value) =>
-      typeof value === 'number' && !isNaN(value)
-        ? `GHC ${(value / 100).toFixed(2)}`
-        : 'GHC —',
-  },
-  { accessor: 'method', header: 'Method', render: (value) => value || '-' },
-  { accessor: 'status', header: 'Status', render: (value) => value || '-' },
-  {
-    accessor: 'transaction_ref',
-    header: 'Transaction Ref',
-    render: (value) => value || '-',
-  },
-  {
-    accessor: 'created_at',
-    header: 'Date',
-    render: (value) => (value ? formatDateBritish(value) : '-'),
-  },
-];
-
-// Add Actions column for view button
-const columnsWithActions: Column<PaymentRow>[] = [
-  ...columns,
-  {
-    accessor: 'renderActions',
-    header: 'Actions',
-    render: (_, row) => row.renderActions?.(),
-  },
-];
-
-const defaultSort = {
-  column: null as string | null,
-  direction: 'asc' as 'asc' | 'desc',
-};
-const defaultRowsPerPage = 10;
-
-function formatDateBritish(dateValue: string | Date) {
-  const d = new Date(dateValue);
-  const day = String(d.getDate()).padStart(2, '0');
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const year = d.getFullYear();
-  return `${day}/${month}/${year}`;
-}
-
-/**
- * PaymentsTable fetches and displays real payment data using tRPC.
- */
 const PaymentsTable: React.FC = () => {
   const { data: rawData, isLoading, error } = trpc.getPayments.useQuery();
 
@@ -130,6 +78,13 @@ const PaymentsTable: React.FC = () => {
     },
   });
   console.log('PaymentsTable data:', data);
+
+  const defaultSort = {
+    column: null as string | null,
+    direction: 'asc' as 'asc' | 'desc',
+  };
+  const defaultRowsPerPage = 10;
+
   const [sortState, setSortState] = useState<typeof defaultSort>(defaultSort);
   const [search, setSearch] = useState('');
   const [methodFilter, setMethodFilter] = useState('');
@@ -141,13 +96,19 @@ const PaymentsTable: React.FC = () => {
   // Edit modal state
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [paymentToEdit, setPaymentToEdit] = useState<Payment | null>(null);
-  const [editForm, setEditForm] = useState<Partial<Payment>>({
+  const [editForm, setEditForm] = useState<
+    Partial<Payment> & { amount_input?: string }
+  >({
     pendingSync: false,
+    amount_input: '',
   });
   // Add new modal state
   const [addModalOpen, setAddModalOpen] = useState(false);
-  const [addForm, setAddForm] = useState<Partial<Payment>>({
+  const [addForm, setAddForm] = useState<
+    Partial<Payment> & { amount_input?: string }
+  >({
     amount: 0,
+    amount_input: '',
     method: '',
     pendingSync: false,
   });
@@ -169,9 +130,48 @@ const PaymentsTable: React.FC = () => {
     return Array.from(set);
   }, [data]);
 
+  // Define columns first
+  const columns = useMemo<Column<PaymentRow>[]>(
+    () => [
+      { accessor: 'id', header: 'Payment ID' },
+      { accessor: 'order_id', header: 'Order ID' },
+      {
+        accessor: 'amount',
+        header: 'Amount (GHS)',
+        render: (value: number) =>
+          typeof value === 'number' && !isNaN(value)
+            ? `GHS ${(value / 100).toFixed(2)}`
+            : 'GHS —',
+      },
+      {
+        accessor: 'method',
+        header: 'Method',
+        render: (value: string) => value || '-',
+      },
+      {
+        accessor: 'status',
+        header: 'Status',
+        render: (_value: string | null, row: PaymentRow) => {
+          const order = ordersData?.find((o) => o.id === row.order_id);
+          return order ? order.status : '—';
+        },
+      },
+      {
+        accessor: 'transaction_ref',
+        header: 'Transaction Ref',
+        render: (value: string | null) => value || '-',
+      },
+      {
+        accessor: 'created_at',
+        header: 'Date',
+        render: (value: string) => (value ? formatDateBritish(value) : '-'),
+      },
+    ],
+    [ordersData]
+  );
+
   // Filtering logic (global search + method filter)
   const filteredData = useMemo(() => {
-    if (!data) return [];
     let filtered = data;
     if (methodFilter) {
       filtered = filtered.filter((row) => row.method === methodFilter);
@@ -194,7 +194,7 @@ const PaymentsTable: React.FC = () => {
       );
     }
     return filtered;
-  }, [data, search, methodFilter]);
+  }, [data, search, methodFilter, columns]);
 
   // Sorting logic (applied after filtering)
   const sortedData = useMemo(() => {
@@ -289,45 +289,57 @@ const PaymentsTable: React.FC = () => {
     }
   }, [paginatedData, selectedIds]);
 
-  const columnsWithBulk: Column<PaymentRow>[] = [
-    {
-      accessor: 'bulkSelect',
-      header: (
-        <input
-          type="checkbox"
-          className="align-middle"
-          aria-label="Select all"
-          ref={selectAllRef}
-          checked={
-            paginatedData.length > 0 &&
-            paginatedData.every((row) => selectedIds.includes(row.id))
+  // Bulk selection column
+  const bulkSelectColumn: Column<PaymentRow> = {
+    accessor: 'bulkSelect',
+    header: (
+      <input
+        type="checkbox"
+        className="align-middle"
+        aria-label="Select all"
+        ref={selectAllRef}
+        checked={
+          paginatedData.length > 0 &&
+          paginatedData.every((row) => selectedIds.includes(row.id))
+        }
+        onChange={(e) => {
+          if (e.target.checked) {
+            setSelectedIds(paginatedData.map((row) => row.id));
+          } else {
+            setSelectedIds([]);
           }
-          onChange={(e) => {
-            if (e.target.checked) {
-              setSelectedIds(paginatedData.map((row) => row.id));
-            } else {
-              setSelectedIds([]);
-            }
-          }}
-        />
-      ),
-      render: (_value, row) => (
-        <input
-          type="checkbox"
-          checked={selectedIds.includes(row.id)}
-          onChange={(e) => {
-            if (e.target.checked) {
-              setSelectedIds((ids) => [...ids, row.id]);
-            } else {
-              setSelectedIds((ids) => ids.filter((id) => id !== row.id));
-            }
-          }}
-          className="align-middle"
-          aria-label="Select row"
-        />
-      ),
-    },
-    ...columnsWithActions,
+        }}
+      />
+    ),
+    render: (_value, row) => (
+      <input
+        type="checkbox"
+        checked={selectedIds.includes(row.id)}
+        onChange={(e) => {
+          if (e.target.checked) {
+            setSelectedIds((ids) => [...ids, row.id]);
+          } else {
+            setSelectedIds((ids) => ids.filter((id) => id !== row.id));
+          }
+        }}
+        className="align-middle"
+        aria-label="Select row"
+      />
+    ),
+  };
+
+  // Actions column
+  const actionsColumn: Column<PaymentRow> = {
+    accessor: 'renderActions',
+    header: 'Actions',
+    render: (_, row) => row.renderActions?.(),
+  };
+
+  // Combine for table
+  const columnsWithBulkAndActions: Column<PaymentRow>[] = [
+    bulkSelectColumn,
+    ...columns,
+    actionsColumn,
   ];
 
   // Type guard to check if a value is a key of PaymentRow
@@ -406,7 +418,14 @@ const PaymentsTable: React.FC = () => {
         <button
           className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
           onClick={() => {
-            setAddForm({ amount: 0, method: '', pendingSync: false });
+            setAddForm({
+              amount: 0,
+              amount_input: '',
+              method: '',
+              status: '',
+              transaction_ref: '',
+              pendingSync: false,
+            });
             setAddModalOpen(true);
           }}
         >
@@ -447,7 +466,7 @@ const PaymentsTable: React.FC = () => {
         </select>
       </div>
       <DataTable
-        columns={columnsWithBulk}
+        columns={columnsWithBulkAndActions}
         data={paginatedData}
         onSort={handleSort}
         sortState={sortState}
@@ -552,8 +571,8 @@ const PaymentsTable: React.FC = () => {
             <div>
               <span className="font-semibold">Amount:</span>{' '}
               {paymentToView.amount
-                ? `GHC ${(paymentToView.amount / 100).toFixed(2)}`
-                : 'GHC —'}
+                ? `GHS ${(paymentToView.amount / 100).toFixed(2)}`
+                : 'GHS —'}
             </div>
             <div>
               <span className="font-semibold">Method:</span>{' '}
@@ -568,12 +587,18 @@ const PaymentsTable: React.FC = () => {
             <div>
               <span className="font-semibold">Payment Balance:</span>{' '}
               {typeof paymentToView.payment_balance === 'number'
-                ? `GHC ${paymentToView.payment_balance}`
+                ? `GHS ${paymentToView.payment_balance}`
                 : '—'}
             </div>
             <div>
               <span className="font-semibold">Status:</span>{' '}
-              {paymentToView.status || '—'}
+              {(() => {
+                if (!ordersData) return '—';
+                const order = ordersData.find(
+                  (o) => o.id === paymentToView.order_id
+                );
+                return order ? order.status : '—';
+              })()}
             </div>
             <div>
               <span className="font-semibold">Transaction Ref:</span>{' '}
@@ -592,7 +617,7 @@ const PaymentsTable: React.FC = () => {
         onClose={() => {
           setEditModalOpen(false);
           setPaymentToEdit(null);
-          setEditForm({ pendingSync: false });
+          setEditForm({ pendingSync: false, amount_input: '' });
         }}
         title="Edit Payment"
         actions={
@@ -602,7 +627,7 @@ const PaymentsTable: React.FC = () => {
               onClick={() => {
                 setEditModalOpen(false);
                 setPaymentToEdit(null);
-                setEditForm({ pendingSync: false });
+                setEditForm({ pendingSync: false, amount_input: '' });
               }}
             >
               Cancel
@@ -610,10 +635,19 @@ const PaymentsTable: React.FC = () => {
             <button
               className="px-4 py-2 rounded bg-green-500 text-white hover:bg-green-600"
               onClick={() => {
-                toast.success(`Payment updated successfully!`);
+                if (!paymentToEdit) return;
+                updatePayment.mutate({
+                  id: paymentToEdit.id,
+                  ...editForm,
+                  amount:
+                    editForm.amount_input !== undefined &&
+                    editForm.amount_input !== ''
+                      ? Math.round(Number(editForm.amount_input) * 100)
+                      : undefined,
+                });
                 setEditModalOpen(false);
                 setPaymentToEdit(null);
-                setEditForm({ pendingSync: false });
+                setEditForm({ pendingSync: false, amount_input: '' });
               }}
             >
               Save
@@ -629,13 +663,17 @@ const PaymentsTable: React.FC = () => {
             }}
           >
             <div>
-              <label className="block font-semibold mb-1">Amount (GHC)</label>
+              <label className="block font-semibold mb-1">Amount (GHS)</label>
               <input
                 type="number"
+                step="0.01"
                 className="w-full border rounded px-2 py-1"
-                value={editForm.amount ?? ''}
+                value={editForm.amount_input ?? ''}
                 onChange={(e) =>
-                  setEditForm((f) => ({ ...f, amount: Number(e.target.value) }))
+                  setEditForm((f) => ({
+                    ...f,
+                    amount_input: e.target.value,
+                  }))
                 }
               />
             </div>
@@ -658,7 +696,14 @@ const PaymentsTable: React.FC = () => {
         open={addModalOpen}
         onClose={() => {
           setAddModalOpen(false);
-          setAddForm({ amount: 0, method: '', pendingSync: false });
+          setAddForm({
+            amount: 0,
+            amount_input: '',
+            method: '',
+            status: '',
+            transaction_ref: '',
+            pendingSync: false,
+          });
         }}
         title="Add New Payment"
         actions={
@@ -667,7 +712,14 @@ const PaymentsTable: React.FC = () => {
               className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300 mr-2"
               onClick={() => {
                 setAddModalOpen(false);
-                setAddForm({ amount: 0, method: '', pendingSync: false });
+                setAddForm({
+                  amount: 0,
+                  amount_input: '',
+                  method: '',
+                  status: '',
+                  transaction_ref: '',
+                  pendingSync: false,
+                });
               }}
             >
               Cancel
@@ -675,9 +727,35 @@ const PaymentsTable: React.FC = () => {
             <button
               className="px-4 py-2 rounded bg-green-600 text-white hover:bg-green-700"
               onClick={() => {
-                toast.success(`Payment added successfully!`);
+                if (
+                  !addForm.amount_input ||
+                  !addForm.method ||
+                  !addForm.order_id
+                ) {
+                  toast.error('Order, amount and payment method are required');
+                  return;
+                }
+                createPayment.mutate({
+                  order_id: addForm.order_id,
+                  amount: Math.round(Number(addForm.amount_input) * 100),
+                  method: addForm.method,
+                  status: addForm.status || undefined,
+                  transaction_ref: addForm.transaction_ref || undefined,
+                  payment_type: addForm.payment_type || undefined,
+                  payment_balance: addForm.payment_balance ?? undefined,
+                });
                 setAddModalOpen(false);
-                setAddForm({ amount: 0, method: '', pendingSync: false });
+                setAddForm({
+                  order_id: undefined,
+                  amount: 0,
+                  amount_input: '',
+                  method: '',
+                  status: '',
+                  transaction_ref: '',
+                  payment_type: '',
+                  payment_balance: undefined,
+                  pendingSync: false,
+                });
               }}
             >
               Add
@@ -693,13 +771,17 @@ const PaymentsTable: React.FC = () => {
         >
           {/* Amount input */}
           <div>
-            <label className="block font-semibold mb-1">Amount (GHC)</label>
+            <label className="block font-semibold mb-1">Amount (GHS)</label>
             <input
               type="number"
+              step="0.01"
               className="w-full border rounded px-2 py-1"
-              value={addForm.amount ?? ''}
+              value={addForm.amount_input ?? ''}
               onChange={(e) =>
-                setAddForm((f) => ({ ...f, amount: Number(e.target.value) }))
+                setAddForm((f) => ({
+                  ...f,
+                  amount_input: e.target.value,
+                }))
               }
             />
           </div>
@@ -766,7 +848,7 @@ const PaymentsTable: React.FC = () => {
           {/* Payment Balance input */}
           <div>
             <label className="block font-semibold mb-1">
-              Payment Balance (GHC)
+              Payment Balance (GHS)
             </label>
             <input
               type="number"
@@ -779,6 +861,19 @@ const PaymentsTable: React.FC = () => {
                 }))
               }
               placeholder="Enter payment balance"
+            />
+          </div>
+          {/* Transaction Ref input */}
+          <div>
+            <label className="block font-semibold mb-1">Transaction Ref</label>
+            <input
+              type="text"
+              className="w-full border rounded px-2 py-1"
+              value={addForm.transaction_ref ?? ''}
+              onChange={(e) =>
+                setAddForm((f) => ({ ...f, transaction_ref: e.target.value }))
+              }
+              placeholder="Enter transaction reference"
             />
           </div>
           {/* Add more fields as needed */}
@@ -829,8 +924,8 @@ const PaymentsTable: React.FC = () => {
             <div>
               <span className="font-semibold">Amount:</span>{' '}
               {paymentToDelete.amount
-                ? `GHC ${(paymentToDelete.amount / 100).toFixed(2)}`
-                : 'GHC —'}
+                ? `GHS ${(paymentToDelete.amount / 100).toFixed(2)}`
+                : 'GHS —'}
             </div>
             <div>
               <span className="font-semibold">Method:</span>{' '}

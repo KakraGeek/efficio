@@ -111,6 +111,28 @@ function isClientKey(key: unknown): key is keyof Client {
  */
 const ClientsTable: React.FC = () => {
   const { data, isLoading, error } = trpc.getClients.useQuery();
+  const utils = trpc.useContext();
+
+  const createClient = trpc.addClient.useMutation({
+    onSuccess: () => {
+      utils.getClients.invalidate();
+      toast.success('Client created successfully!');
+    },
+    onError: (error: any) => {
+      toast.error(`Error creating client: ${error.message}`);
+    },
+  });
+
+  const updateClient = trpc.updateClient.useMutation({
+    onSuccess: () => {
+      utils.getClients.invalidate();
+      toast.success('Client updated successfully!');
+    },
+    onError: (error: any) => {
+      toast.error(`Error updating client: ${error.message}`);
+    },
+  });
+
   const clients: Client[] = (data ?? []).map((c) => ({
     ...(c as any),
     pendingSync: (c as any).pendingSync ?? false,
@@ -702,7 +724,14 @@ const ClientsTable: React.FC = () => {
             <button
               className="px-4 py-2 rounded bg-green-500 text-white hover:bg-green-600"
               onClick={() => {
-                toast.success(`Client updated successfully!`);
+                if (!clientToEdit) return;
+                updateClient.mutate({
+                  id: clientToEdit.id,
+                  ...editForm,
+                  phone: editForm.phone ?? undefined,
+                  email: editForm.email ?? undefined,
+                  notes: editForm.notes ?? undefined,
+                });
                 setEditModalOpen(false);
                 setClientToEdit(null);
                 setEditForm({
@@ -1046,22 +1075,18 @@ const ClientsTable: React.FC = () => {
             </button>
             <button
               className="px-4 py-2 rounded bg-green-600 text-white hover:bg-green-700"
-              onClick={async () => {
-                // Validate required fields
+              onClick={() => {
                 if (!addForm.name) {
-                  toast.error('Name is required.');
+                  toast.error('Name is required');
                   return;
                 }
-                if (online) {
-                  // TODO: Call tRPC mutation to create client on server
-                  toast.success('Client added successfully!');
-                } else {
-                  // Save to IndexedDB with pendingSync
-                  // TODO: Actually call addClient from indexedDb.ts here
-                  toast('Client saved locally. Will sync when back online.', {
-                    icon: '📦',
-                  });
-                }
+                createClient.mutate({
+                  ...addForm,
+                  name: addForm.name ?? '',
+                  phone: addForm.phone ?? undefined,
+                  email: addForm.email ?? undefined,
+                  notes: addForm.notes ?? undefined,
+                });
                 setAddModalOpen(false);
                 setAddForm({
                   name: '',

@@ -3,7 +3,13 @@ import { z } from 'zod';
 import { createTRPCReact } from '@trpc/react-query';
 import type { Context } from './context';
 import { db } from '../../db/client';
-import { clients, orders, inventory, payments } from '../../db/schema';
+import {
+  clients,
+  orders,
+  inventory,
+  payments,
+  settings,
+} from '../../db/schema';
 import { eq, inArray } from 'drizzle-orm';
 
 const t = initTRPC.context<Context>().create();
@@ -46,18 +52,32 @@ export const appRouter = t.router({
         name: z.string(),
         phone: z.string().optional(),
         email: z.string().optional(),
-        neck: z.number().optional(),
-        chest: z.number().optional(),
-        waist: z.number().optional(),
-        hips: z.number().optional(),
-        thigh: z.number().optional(),
-        inseam: z.number().optional(),
-        arm_length: z.number().optional(),
+        neck: z.number().nullable().optional(),
+        chest: z.number().nullable().optional(),
+        waist: z.number().nullable().optional(),
+        hips: z.number().nullable().optional(),
+        thigh: z.number().nullable().optional(),
+        inseam: z.number().nullable().optional(),
+        arm_length: z.number().nullable().optional(),
+        bust: z.number().nullable().optional(),
+        outseam: z.number().nullable().optional(),
+        ankle: z.number().nullable().optional(),
+        shoulder: z.number().nullable().optional(),
+        sleeve_length: z.number().nullable().optional(),
+        knee: z.number().nullable().optional(),
+        wrist: z.number().nullable().optional(),
+        rise: z.number().nullable().optional(),
+        bicep: z.number().nullable().optional(),
+        notes: z.string().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
       if (!ctx.userId) throw new Error('Not authenticated');
-      return db.insert(clients).values({ ...input, user_id: ctx.userId });
+      const [client] = await db
+        .insert(clients)
+        .values({ ...input, user_id: ctx.userId })
+        .returning();
+      return client;
     }),
 
   removeClient: t.procedure
@@ -110,7 +130,6 @@ export const appRouter = t.router({
     return { message: `Hello, user ${ctx.userId}!` };
   }),
 
-  // Add update mutations for all tables
   updateClient: t.procedure
     .input(
       z.object({
@@ -118,17 +137,30 @@ export const appRouter = t.router({
         name: z.string().optional(),
         phone: z.string().nullable().optional(),
         email: z.string().nullable().optional(),
-        // Add all other client fields as needed
-        notes: z.string().nullable().optional(),
-        // ...measurement fields...
+        neck: z.number().nullable().optional(),
+        chest: z.number().nullable().optional(),
+        bust: z.number().nullable().optional(),
+        waist: z.number().nullable().optional(),
+        hips: z.number().nullable().optional(),
+        thigh: z.number().nullable().optional(),
+        inseam: z.number().nullable().optional(),
+        arm_length: z.number().nullable().optional(),
+        outseam: z.number().nullable().optional(),
+        ankle: z.number().nullable().optional(),
+        shoulder: z.number().nullable().optional(),
+        sleeve_length: z.number().nullable().optional(),
+        knee: z.number().nullable().optional(),
+        wrist: z.number().nullable().optional(),
+        rise: z.number().nullable().optional(),
+        bicep: z.number().nullable().optional(),
+        notes: z.string().optional(),
       })
     )
-    .mutation(async ({ ctx, input }) => {
-      if (!ctx.userId) throw new Error('Not authenticated');
+    .mutation(async ({ input }) => {
       const { id, ...updates } = input;
       const [client] = await db
         .update(clients)
-        .set({ ...updates, updated_at: new Date() })
+        .set(updates)
         .where(eq(clients.id, id))
         .returning();
       return client;
@@ -249,6 +281,8 @@ export const appRouter = t.router({
         method: z.string(),
         status: z.string().nullable().optional(),
         transaction_ref: z.string().nullable().optional(),
+        payment_type: z.string().nullable().optional(),
+        payment_balance: z.number().nullable().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -292,6 +326,36 @@ export const appRouter = t.router({
       if (!ctx.userId) throw new Error('Not authenticated');
       if (input.ids.length === 0) return;
       return db.delete(orders).where(inArray(orders.id, input.ids));
+    }),
+
+  getSettings: t.procedure.query(async () => {
+    const rows = await db.select().from(settings).limit(1);
+    return rows[0] || null;
+  }),
+
+  updateSettings: t.procedure
+    .input(
+      z.object({
+        businessName: z.string(),
+        address: z.string(),
+        phone: z.string(),
+        email: z.string(),
+        logoUrl: z.string(),
+      })
+    )
+    .mutation(async ({ input }) => {
+      // Try to update the row with id=1
+      const updated = await db
+        .update(settings)
+        .set(input)
+        .where(eq(settings.id, 1));
+
+      if (updated.rowCount === 0) {
+        // If no row was updated, insert a new one with id=1
+        await db.insert(settings).values({ id: 1, ...input });
+      }
+
+      return { success: true };
     }),
 });
 

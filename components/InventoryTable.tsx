@@ -707,7 +707,11 @@ const InventoryTable: React.FC = () => {
             <button
               className="px-4 py-2 rounded bg-green-500 text-white hover:bg-green-600"
               onClick={() => {
-                toast.success(`Item updated successfully!`);
+                if (!itemToEdit) return;
+                updateInventoryItem.mutate({
+                  id: itemToEdit.id,
+                  ...editForm,
+                });
                 setEditModalOpen(false);
                 setItemToEdit(null);
                 setEditForm({ pendingSync: false });
@@ -824,7 +828,20 @@ const InventoryTable: React.FC = () => {
             <button
               className="px-4 py-2 rounded bg-green-600 text-white hover:bg-green-700"
               onClick={() => {
-                toast.success(`Item '${addForm.name}' added successfully!`);
+                if (!addForm.name || addForm.quantity === undefined) {
+                  toast.error('Name and quantity are required');
+                  return;
+                }
+                createInventoryItem.mutate({
+                  name: addForm.name,
+                  category: addForm.category || undefined,
+                  quantity: addForm.quantity,
+                  unit: addForm.unit || undefined,
+                  low_stock_alert:
+                    typeof addForm.low_stock_alert === 'number'
+                      ? addForm.low_stock_alert
+                      : undefined,
+                });
                 setAddModalOpen(false);
                 setAddForm({
                   name: '',
