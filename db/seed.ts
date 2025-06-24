@@ -154,7 +154,7 @@ async function seed() {
     {
       user_id: userId,
       name: 'Buttons',
-      category: 'Accessory',
+      category: 'Accessories',
       quantity: 200,
       unit: 'pieces',
       low_stock_alert: 50,
@@ -162,7 +162,7 @@ async function seed() {
     {
       user_id: userId,
       name: 'Zippers',
-      category: 'Accessory',
+      category: 'Accessories',
       quantity: 15,
       unit: 'pieces',
       low_stock_alert: 10,

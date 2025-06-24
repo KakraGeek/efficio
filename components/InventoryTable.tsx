@@ -28,7 +28,24 @@ const columns: Column<InventoryRow>[] = [
   { accessor: 'id', header: 'Item ID' },
   { accessor: 'name', header: 'Item Name', render: (value) => value || '-' },
   { accessor: 'category', header: 'Category', render: (value) => value || '-' },
-  { accessor: 'quantity', header: 'Quantity', render: (value) => value ?? '-' },
+  {
+    accessor: 'quantity',
+    header: 'Quantity',
+    render: (value, row) => {
+      const isLowStock =
+        typeof row.low_stock_alert === 'number' && value <= row.low_stock_alert;
+      return (
+        <span>
+          {value}
+          {isLowStock && (
+            <span className="ml-2 px-2 py-0.5 bg-red-500 text-white text-xs rounded">
+              Low Stock!
+            </span>
+          )}
+        </span>
+      );
+    },
+  },
   { accessor: 'unit', header: 'Unit', render: (value) => value || '-' },
   {
     accessor: 'low_stock_alert',
@@ -131,6 +148,18 @@ const InventoryTable: React.FC = () => {
       toast.error(`Error deleting items: ${error.message}`);
     },
   });
+  const removeInventoryQuantity = trpc.updateInventory.useMutation({
+    onSuccess: () => {
+      utils.getInventory.invalidate();
+      toast.success('Inventory updated successfully!');
+      setRemoveModalOpen(false);
+      setRemoveQuantity('');
+      setRemoveError('');
+    },
+    onError: (error: any) => {
+      setRemoveError(error.message || 'Error updating inventory.');
+    },
+  });
   console.log('InventoryTable data:', data);
   const [sortState, setSortState] = useState<typeof defaultSort>(defaultSort);
   const [search, setSearch] = useState('');
@@ -171,13 +200,31 @@ const InventoryTable: React.FC = () => {
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   // Bulk delete modal state
   const [bulkDeleteModalOpen, setBulkDeleteModalOpen] = useState(false);
+  // Add these new state variables near your other modal states
+  const [removeModalOpen, setRemoveModalOpen] = useState(false);
+  const [itemToRemove, setItemToRemove] = useState<InventoryItem | null>(null);
+  // Add these new state variables near your other modal states
+  const [removeQuantity, setRemoveQuantity] = useState('');
+  const [removeError, setRemoveError] = useState('');
+  // Add this state near your other modal states
+  const [addCategoryOther, setAddCategoryOther] = useState('');
+  // Add this state near your other modal states
+  const [editCategoryOther, setEditCategoryOther] = useState('');
 
   // Get unique categories for the dropdown
   const categoryOptions = useMemo(() => {
     if (!data) return [];
     const set = new Set<string>();
     data.forEach((row) => {
-      if (row.category) set.add(row.category);
+      if (row.category) {
+        // Normalize both 'accessory' and 'accessories' to 'Accessories'
+        let cat = row.category.trim().toLowerCase();
+        if (cat === 'accessory' || cat === 'accessories') {
+          set.add('Accessories');
+        } else {
+          set.add(row.category);
+        }
+      }
     });
     return Array.from(set);
   }, [data]);
@@ -303,6 +350,15 @@ const InventoryTable: React.FC = () => {
             Pending Sync
           </span>
         )}
+        <button
+          className="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600"
+          onClick={() => {
+            setItemToRemove(row);
+            setRemoveModalOpen(true);
+          }}
+        >
+          Remove
+        </button>
       </div>
     ),
   }));
@@ -421,6 +477,15 @@ const InventoryTable: React.FC = () => {
               Pending Sync
             </span>
           )}
+          <button
+            className="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600"
+            onClick={() => {
+              setItemToRemove(row);
+              setRemoveModalOpen(true);
+            }}
+          >
+            Remove
+          </button>
         </div>
       ),
     },
@@ -708,13 +773,34 @@ const InventoryTable: React.FC = () => {
               className="px-4 py-2 rounded bg-green-500 text-white hover:bg-green-600"
               onClick={() => {
                 if (!itemToEdit) return;
+                let categoryToUse = editForm.category;
+                if (categoryToUse === '__other__') {
+                  if (!editCategoryOther.trim()) {
+                    toast.error('Please enter a new category');
+                    return;
+                  }
+                  // Prevent duplicates (case-insensitive)
+                  const exists = categoryOptions.some(
+                    (c) =>
+                      c.toLowerCase() === editCategoryOther.trim().toLowerCase()
+                  );
+                  if (exists) {
+                    toast.error(
+                      'This category already exists. Please select it from the list.'
+                    );
+                    return;
+                  }
+                  categoryToUse = editCategoryOther.trim();
+                }
                 updateInventoryItem.mutate({
                   id: itemToEdit.id,
                   ...editForm,
+                  category: categoryToUse || undefined,
                 });
                 setEditModalOpen(false);
                 setItemToEdit(null);
                 setEditForm({ pendingSync: false });
+                setEditCategoryOther('');
               }}
             >
               Save
@@ -741,13 +827,35 @@ const InventoryTable: React.FC = () => {
             </div>
             <div>
               <label className="block font-semibold mb-1">Category</label>
-              <input
+              <select
                 className="w-full border rounded px-2 py-1"
                 value={editForm.category ?? ''}
-                onChange={(e) =>
-                  setEditForm((f) => ({ ...f, category: e.target.value }))
-                }
-              />
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setEditForm((f) => ({ ...f, category: value }));
+                  if (value === '__other__') {
+                    setEditCategoryOther('');
+                  } else {
+                    setEditCategoryOther('');
+                  }
+                }}
+              >
+                <option value="">Select a category</option>
+                {categoryOptions.map((category) => (
+                  <option key={category} value={category}>
+                    {category}
+                  </option>
+                ))}
+                <option value="__other__">Other</option>
+              </select>
+              {editForm.category === '__other__' && (
+                <input
+                  className="w-full border rounded px-2 py-1 mt-2"
+                  placeholder="Enter new category"
+                  value={editCategoryOther}
+                  onChange={(e) => setEditCategoryOther(e.target.value)}
+                />
+              )}
             </div>
             <div>
               <label className="block font-semibold mb-1">Quantity</label>
@@ -832,9 +940,28 @@ const InventoryTable: React.FC = () => {
                   toast.error('Name and quantity are required');
                   return;
                 }
+                let categoryToUse = addForm.category;
+                if (categoryToUse === '__other__') {
+                  if (!addCategoryOther.trim()) {
+                    toast.error('Please enter a new category');
+                    return;
+                  }
+                  // Prevent duplicates (case-insensitive)
+                  const exists = categoryOptions.some(
+                    (c) =>
+                      c.toLowerCase() === addCategoryOther.trim().toLowerCase()
+                  );
+                  if (exists) {
+                    toast.error(
+                      'This category already exists. Please select it from the list.'
+                    );
+                    return;
+                  }
+                  categoryToUse = addCategoryOther.trim();
+                }
                 createInventoryItem.mutate({
                   name: addForm.name,
-                  category: addForm.category || undefined,
+                  category: categoryToUse || undefined,
                   quantity: addForm.quantity,
                   unit: addForm.unit || undefined,
                   low_stock_alert:
@@ -851,6 +978,7 @@ const InventoryTable: React.FC = () => {
                   low_stock_alert: undefined,
                   pendingSync: false,
                 });
+                setAddCategoryOther('');
               }}
             >
               Add
@@ -876,13 +1004,36 @@ const InventoryTable: React.FC = () => {
           </div>
           <div>
             <label className="block font-semibold mb-1">Category</label>
-            <input
+            <select
               className="w-full border rounded px-2 py-1"
               value={addForm.category ?? ''}
-              onChange={(e) =>
-                setAddForm((f) => ({ ...f, category: e.target.value }))
-              }
-            />
+              onChange={(e) => {
+                const value = e.target.value;
+                setAddForm((f) => ({ ...f, category: value }));
+                if (value === '__other__') {
+                  setAddCategoryOther('');
+                } else {
+                  setAddCategoryOther('');
+                }
+              }}
+            >
+              <option value="">Select a category</option>
+              {/* Add comprehensive and unique categories */}
+              {categoryOptions.map((category) => (
+                <option key={category} value={category}>
+                  {category}
+                </option>
+              ))}
+              <option value="__other__">Other</option>
+            </select>
+            {addForm.category === '__other__' && (
+              <input
+                className="w-full border rounded px-2 py-1 mt-2"
+                placeholder="Enter new category"
+                value={addCategoryOther}
+                onChange={(e) => setAddCategoryOther(e.target.value)}
+              />
+            )}
           </div>
           <div>
             <label className="block font-semibold mb-1">Quantity</label>
@@ -1015,6 +1166,71 @@ const InventoryTable: React.FC = () => {
           item(s)?
         </div>
       </Modal>
+      {/* Remove Item Modal */}
+      {removeModalOpen && itemToRemove && (
+        <Modal
+          open={true}
+          onClose={() => {
+            setRemoveModalOpen(false);
+            setRemoveQuantity('');
+            setRemoveError('');
+          }}
+        >
+          <h2 className="text-lg font-bold mb-2">Remove from Inventory</h2>
+          <p className="mb-2">
+            Item: <span className="font-semibold">{itemToRemove.name}</span>
+          </p>
+          <label className="block mb-1">Quantity to remove:</label>
+          <input
+            type="number"
+            min={1}
+            max={itemToRemove.quantity}
+            value={removeQuantity}
+            onChange={(e) => {
+              setRemoveQuantity(e.target.value);
+              setRemoveError('');
+            }}
+            className="border rounded px-2 py-1 w-full mb-2"
+            placeholder={`Max: ${itemToRemove.quantity}`}
+          />
+          {removeError && (
+            <div className="text-red-500 mb-2">{removeError}</div>
+          )}
+          <div className="flex gap-2 justify-end">
+            <button
+              className="bg-gray-300 px-3 py-1 rounded"
+              onClick={() => {
+                setRemoveModalOpen(false);
+                setRemoveQuantity('');
+                setRemoveError('');
+              }}
+            >
+              Cancel
+            </button>
+            <button
+              className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
+              onClick={() => {
+                if (!itemToRemove) return;
+                const qty = Number(removeQuantity);
+                if (!removeQuantity || isNaN(qty) || qty < 1) {
+                  setRemoveError('Please enter a valid quantity.');
+                  return;
+                }
+                if (qty > itemToRemove.quantity) {
+                  setRemoveError('Cannot remove more than available stock.');
+                  return;
+                }
+                removeInventoryQuantity.mutate({
+                  id: itemToRemove.id,
+                  quantity: itemToRemove.quantity - qty,
+                });
+              }}
+            >
+              Confirm Remove
+            </button>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 };
