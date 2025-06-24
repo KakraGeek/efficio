@@ -1,11 +1,9 @@
 ### ✅ Step-by-Step: Load the Starter Project in Cursor
 
 1. **Unzip the File**
-
    - Extract the contents of `efficio-starter.zip` to a folder on your computer, e.g., `efficio-starter`.
 
 2. **Open in Cursor**
-
    - Launch **Cursor**.
 
    - Select **“Open Folder”** (or press `Cmd+O` / `Ctrl+O`).
@@ -13,7 +11,6 @@
    - Navigate to the unzipped folder `efficio-starter` and open it.
 
 3. **Install Dependencies**
-
    - Open a terminal in Cursor (or use the built-in terminal).
 
    - Run:
@@ -27,7 +24,6 @@
      This installs all necessary packages defined in `package.json`.
 
 4. **Set Up Environment Variables**
-
    - Duplicate the `.env.example` file:
 
      ```
@@ -39,7 +35,6 @@
    - Open `.env` and replace placeholders with real API keys and database URLs (or leave as-is for now if testing UI only).
 
 5. **Run the Dev Server**
-
    - Start the development server:
 
      ```
@@ -51,7 +46,6 @@
    - Visit `http://localhost:3000` in your browser.
 
 6. **Start Coding with Cursor**
-
    - Use Cursor’s AI assistant to scaffold new components or features.
 
    - Example prompt:
