@@ -22,7 +22,8 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
         <main className="flex-1">{children}</main>
         {/* Footer section */}
         <footer className="bg-white shadow p-4 text-center text-sm text-gray-500">
-          &copy; {new Date().getFullYear()} Efficio
+          &copy; {new Date().getFullYear()} Efficio - Powered by The Geek
+          Toolbox
         </footer>
       </div>
       {/* Bottom navigation bar for mobile */}
